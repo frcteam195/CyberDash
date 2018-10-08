@@ -1,0 +1,35 @@
+﻿<Window x:Class="CyberDash.MainWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+        xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+        xmlns:local="clr-namespace:CyberDash"
+        xmlns:panelControls="clr-namespace:PanelControls;assembly=PanelControls"
+        mc:Ignorable="d"
+        Loaded="Window_Loaded"
+        Background="#2a2a2a"
+        Closing="Window_Closing"
+        Title="MainWindow" Height="808" Width="1680" MaxHeight="808" MaxWidth="1680" WindowStyle="None" ResizeMode="NoResize" ScrollViewer.VerticalScrollBarVisibility="Disabled" SnapsToDevicePixels="True" WindowState="Maximized">
+    <Grid HorizontalAlignment="Center" Height="808" Margin="0,0,0,0" VerticalAlignment="Center" Width="1680">
+        <Grid.ColumnDefinitions>
+            <ColumnDefinition Width="Auto" />
+            <ColumnDefinition Width="*" />
+        </Grid.ColumnDefinitions>
+        <Grid.RowDefinitions>
+            <RowDefinition Height="*"/>
+        </Grid.RowDefinitions>
+        <MediaElement Grid.Row="0" Grid.Column="0" Width="640" MinWidth="640" MaxWidth="640" Height="480" MinHeight="480" MaxHeight="480" VerticalAlignment="Center"  HorizontalAlignment="Center" Source="http://10.1.95.11/"/>
+        <Grid Grid.Column="1" Grid.Row="0">
+            <Button Content="Button" Margin="452,582,464,152" Click="Button_Click" />
+            <panelControls:LEDControl x:Name="ledHasCube" Width="200" Height="200" ColorOn="#fff000"  ColorOff="#a5a04b" IsActive="True" Margin="416,282,424,326"/>
+            <ComboBox x:Name="cboAutoStartSelection" HorizontalAlignment="Left" Margin="382,116,0,0" VerticalAlignment="Top" SelectedIndex="0" Width="268" Height="42" HorizontalContentAlignment="Center" VerticalContentAlignment="Center" FontSize="25">
+                <ComboBoxItem Content="Start From Left"/>
+                <ComboBoxItem Content="Start From Center"/>
+                <ComboBoxItem Content="Start From Right"/>
+            </ComboBox>
+            <Label Content="Has Cube" HorizontalAlignment="Left" Margin="460,234,0,0" VerticalAlignment="Top" FontSize="25" Foreground="White" />
+            <Label Content="Auto Starting Position:" HorizontalAlignment="Left" Margin="382,68,0,0" VerticalAlignment="Top" FontSize="25" Foreground="White" />
+        </Grid>
+    </Grid>
+
+</Window>
