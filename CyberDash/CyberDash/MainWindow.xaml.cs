@@ -120,11 +120,13 @@ namespace CyberDash
                             try
                             {
                                 bool enabled = messageReceived.Arguments[0].ToString().Split(':')[1].Split(';')[0] == "true" ? true : false;
-                                //if (prevEnabled != enabled && enabled)
-                                if (ckLogger == null)
+                                if (prevEnabled != enabled && enabled)
                                 {
-                                    ckLogger = new CKLogHandler(@"C:\Logs\OSCLog_" + GetTimestamp(DateTime.Now) + ".csv");
-                                    ckLogger.StartLogging();
+                                    if (ckLogger == null)
+                                    {
+                                        ckLogger = new CKLogHandler(@"C:\Logs\OSCLog_" + GetTimestamp(DateTime.Now) + ".csv");
+                                        ckLogger.StartLogging();
+                                    }
                                     prevEnabled = enabled;
                                 }
 
@@ -139,12 +141,9 @@ namespace CyberDash
                                             ls.AddRange(messageReceived.Arguments);
                                             listString = ls.Select(s => s.ToString().Split(':')[0]).ToList();
                                             ckLogger.WriteCSVHeaders(listString);
-                                            listString = messageReceived.Arguments.Select(s => s.ToString().Split(':')[1].Split(';')[0]).ToList();
                                         }
-                                        else
-                                        {
-                                            listString = messageReceived.Arguments.Select(s => s.ToString().Split(':')[1].Split(';')[0]).ToList();
-                                        }
+
+                                        listString = messageReceived.Arguments.Select(s => s.ToString().Split(':')[1].Split(';')[0]).ToList();
                                         ckLogger.LogData(listString);
                                     } catch (Exception ex)
                                     {

@@ -67,10 +67,7 @@ namespace CyberDash
 
         public void WriteCSVHeaders(List<string> headerData)
         {
-            lock (lockObject)
-            {
-                dataQueue.Enqueue(headerData);
-            }
+            LogData(headerData);
             HeadersWritten = true;
         }
 
