@@ -78,7 +78,7 @@ namespace SharperOSC
 					case('s'):
 						string stringVal = getString(msg, index);
 						arguments.Add(stringVal);
-						index += stringVal.Length;
+						index += stringVal.Length + 1;
 						break;
 				
 					case('b'):
@@ -108,7 +108,7 @@ namespace SharperOSC
 					case ('S'):
 						string SymbolVal = getString(msg, index);
 						arguments.Add(new Symbol(SymbolVal));
-						index += SymbolVal.Length;
+						index += SymbolVal.Length + 1;
 						break;
 
 					case ('c'):
@@ -270,24 +270,46 @@ namespace SharperOSC
 			return val;
 		}
 
-		private static string getString(byte[] msg, int index)
-		{
-			string output = null;
-			int i = index + 4;
-			for (; (i-1) < msg.Length; i += 4)
-			{
-				if (msg[i - 1] == 0)
-				{
-					output = Encoding.ASCII.GetString(msg.SubArray(index, i - index));
-					break;
-				}
-			}
+        private static string getString(byte[] msg, int index)
+        {
+            string output = null;
+            int i = index;
+            for (; i < msg.Length; i++)
+            {
+                if (msg[i] == 0)
+                {
+                    output = Encoding.ASCII.GetString(msg.SubArray(index, (i+1) - index));
+                    break;
+                }
+            }
 
-			if (i >= msg.Length && output == null)
-				throw new Exception("No null terminator after type string");
+            if (i >= msg.Length && output == null)
+                throw new Exception("No null terminator after type string");
 
-			return output.Replace("\0", "");
-		}
+            return output.Replace("\0", "");
+        }
+
+  //      private static string getStringOld(byte[] msg, int index)
+		//{
+		//	string output = null;
+		//	int i = index + 4;
+  //          bool firstPass = false;
+		//	for (; (i-1) < msg.Length; i += 4)
+		//	{
+  //              //Check for first pass to patch bug where some data is ignored depending on how many null terminators in string
+		//		if (msg[i - 1] == 0 && !firstPass)
+		//		{
+		//			output = Encoding.ASCII.GetString(msg.SubArray(index, i - index));
+		//			break;
+		//		}
+  //              firstPass = false;
+		//	}
+
+		//	if (i >= msg.Length && output == null)
+		//		throw new Exception("No null terminator after type string");
+
+		//	return output.Replace("\0", "");
+		//}
 
 		private static byte[] getBlob(byte[] msg, int index)
 		{

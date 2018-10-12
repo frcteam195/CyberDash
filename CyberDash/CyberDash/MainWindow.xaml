@@ -9,8 +9,9 @@
         Loaded="Window_Loaded"
         Background="#2a2a2a"
         Closing="Window_Closing"
-        Title="MainWindow" Height="808" Width="1680" MaxHeight="808" MaxWidth="1680" WindowStyle="None" ResizeMode="NoResize" ScrollViewer.VerticalScrollBarVisibility="Disabled" SnapsToDevicePixels="True" WindowState="Maximized">
-    <Grid HorizontalAlignment="Center" Height="808" Margin="0,0,0,0" VerticalAlignment="Center" Width="1680">
+        Topmost="False"
+        Title="MainWindow" Height="808" Width="1920" MaxHeight="808" MaxWidth="1920" WindowStyle="None" ResizeMode="NoResize" ScrollViewer.VerticalScrollBarVisibility="Disabled" SnapsToDevicePixels="True" WindowState="Maximized">
+    <Grid HorizontalAlignment="Stretch" Margin="0,0,0,0" VerticalAlignment="Stretch">
         <Grid.ColumnDefinitions>
             <ColumnDefinition Width="Auto" />
             <ColumnDefinition Width="*" />
@@ -20,15 +21,36 @@
         </Grid.RowDefinitions>
         <MediaElement Grid.Row="0" Grid.Column="0" Width="640" MinWidth="640" MaxWidth="640" Height="480" MinHeight="480" MaxHeight="480" VerticalAlignment="Center"  HorizontalAlignment="Center" Source="http://10.1.95.11/"/>
         <Grid Grid.Column="1" Grid.Row="0">
-            <Button Content="Button" Margin="452,582,464,152" Click="Button_Click" />
-            <panelControls:LEDControl x:Name="ledHasCube" Width="200" Height="200" ColorOn="#fff000"  ColorOff="#a5a04b" IsActive="True" Margin="416,282,424,326"/>
-            <ComboBox x:Name="cboAutoStartSelection" HorizontalAlignment="Left" Margin="382,116,0,0" VerticalAlignment="Top" SelectedIndex="0" Width="268" Height="42" HorizontalContentAlignment="Center" VerticalContentAlignment="Center" FontSize="25">
-                <ComboBoxItem Content="Start From Left"/>
-                <ComboBoxItem Content="Start From Center"/>
-                <ComboBoxItem Content="Start From Right"/>
-            </ComboBox>
-            <Label Content="Has Cube" HorizontalAlignment="Left" Margin="460,234,0,0" VerticalAlignment="Top" FontSize="25" Foreground="White" />
-            <Label Content="Auto Starting Position:" HorizontalAlignment="Left" Margin="382,68,0,0" VerticalAlignment="Top" FontSize="25" Foreground="White" />
+            <TabControl HorizontalAlignment="Stretch" VerticalAlignment="Stretch">
+                <TabItem Header="Main Panel" HorizontalAlignment="Stretch" VerticalAlignment="Stretch">
+                    <Grid Background="#2a2a2a" HorizontalAlignment="Stretch" VerticalAlignment="Stretch">
+                        <Label Content="Has Cube" HorizontalAlignment="Left" Margin="406,280,0,0" VerticalAlignment="Top" FontSize="25" Foreground="White" />
+                        <panelControls:LEDControl x:Name="ledHasCube" Width="400" Height="400" ColorOn="#fff600"  ColorOff="#808080" IsActive="False" Margin="212,328,319,52" Grid.Column="1"/>
+                        <Label Content="Arm Fault" HorizontalAlignment="Left" Margin="53,30,0,0" VerticalAlignment="Top" FontSize="20" Foreground="White" Grid.ColumnSpan="2" />
+                        <panelControls:LEDControl x:Name="ledArmFault" Width="100" Height="100" ColorOn="#ff1212"  ColorOff="#808080" IsActive="False" Margin="48,74,886,606" Grid.ColumnSpan="2"/>
+                        <Label Content="Elevator Fault" HorizontalAlignment="Left" Margin="174,30,0,0" VerticalAlignment="Top" FontSize="20" Foreground="White" />
+                        <panelControls:LEDControl x:Name="ledElevatorFault" Width="100" Height="100" ColorOn="#ff1212"  ColorOff="#808080" IsActive="False" Margin="188,72,746,608"/>
+                        <Label Content="Climber Fault" HorizontalAlignment="Left" Margin="316,30,0,0" VerticalAlignment="Top" FontSize="20" Foreground="White" />
+                        <panelControls:LEDControl x:Name="ledClimberFault" Width="100" Height="100" ColorOn="#ff1212"  ColorOff="#808080" IsActive="False" Margin="330,72,604,608"/>
+                        <Label Content="Auto Starting Position:" HorizontalAlignment="Left" Margin="577,42,0,0" VerticalAlignment="Top" FontSize="25" Foreground="White" Grid.Column="1" />
+                        <ComboBox x:Name="cboAutoStartSelection" HorizontalAlignment="Left" Margin="577,90,0,0" VerticalAlignment="Top" SelectedIndex="0" Width="268" Height="42" HorizontalContentAlignment="Center" VerticalContentAlignment="Center" FontSize="25" Grid.Column="1">
+                            <ComboBoxItem Content="Start From Left"/>
+                            <ComboBoxItem Content="Start From Center"/>
+                            <ComboBoxItem Content="Start From Right"/>
+                        </ComboBox>
+                        <Label Content="Scale Priority:" HorizontalAlignment="Left" Margin="577,171,0,0" VerticalAlignment="Top" FontSize="25" Foreground="White" Grid.Column="1" />
+                        <ComboBox x:Name="cboAutoScalePriority" HorizontalAlignment="Left" Margin="577,220,0,0" VerticalAlignment="Top" SelectedIndex="0" Width="268" Height="42" HorizontalContentAlignment="Center" VerticalContentAlignment="Center" FontSize="25" Grid.Column="1">
+                            <ComboBoxItem Content="Scale Will Be Low"/>
+                            <ComboBoxItem Content="Scale Will Be High"/>
+                        </ComboBox>
+                    </Grid>
+                </TabItem>
+                <TabItem Header="Camera" HorizontalAlignment="Stretch" VerticalAlignment="Stretch">
+                    <Grid Background="#2a2a2a" HorizontalAlignment="Stretch" VerticalAlignment="Stretch">
+                        <Button x:Name="cmdCalibrate" FontSize="40" Content="Calibrate" Margin="402,460,403,258" Click="cmdCalibrate_Click" />
+                    </Grid>
+                </TabItem>
+            </TabControl>
         </Grid>
     </Grid>
 

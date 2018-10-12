@@ -18,6 +18,8 @@ using System.Windows.Navigation;
 using System.Windows.Shapes;
 
 using SharperOSC;
+using Emgu.CV;
+using Emgu.CV.Structure;
 
 namespace CyberDash
 {
@@ -26,7 +28,7 @@ namespace CyberDash
     /// </summary>
     public partial class MainWindow : Window
     {
-        public static readonly double DRIVER_STATION_HEIGHT = 242;
+        public static readonly double DRIVER_STATION_HEIGHT = 240;
         private BackgroundWorker oscSender = new BackgroundWorker();
         private BackgroundWorker oscReceiver = new BackgroundWorker();
 
@@ -54,11 +56,6 @@ namespace CyberDash
             Logic.Move();
             oscSender.RunWorkerAsync();
             oscReceiver.RunWorkerAsync();
-        }
-
-        private void Button_Click(object sender, RoutedEventArgs e)
-        {
-            ledHasCube.IsActive = !ledHasCube.IsActive;
         }
 
         private void oscSenderWorker_DoWork(object sender, DoWorkEventArgs e)
@@ -108,18 +105,36 @@ namespace CyberDash
                 {
                     switch (messageReceived.Address)
                     {
-                        case "/DashData":
-                            try
-                            {
-                                bool hasCube = (int)messageReceived.Arguments[0] == 1 ? true : false;
-                                Dispatcher.Invoke(() => ledHasCube.IsEnabled = hasCube);
-                            }
-                            catch (Exception) { }
-                            break;
                         case "/LogData":
                             try
                             {
-                                bool enabled = messageReceived.Arguments[0].ToString().Split(':')[1].Split(';')[0] == "true" ? true : false;
+
+                                try
+                                {
+                                    string hasCubeString = messageReceived.Arguments.First(s => s.ToString().ToLower().Contains("hascube")).ToString();
+                                    bool hasCube = hasCubeString.Split(':')[1].Split(';')[0].ToLower().Equals("true");
+                                    Dispatcher.Invoke(() => ledHasCube.IsActive = hasCube);
+
+                                    string hasArmFaultString = messageReceived.Arguments.First(s => s.ToString().ToLower().Contains("armfault")).ToString();
+                                    bool hasArmFault = hasArmFaultString.Split(':')[1].Split(';')[0].ToLower().Equals("true");
+                                    Dispatcher.Invoke(() => ledArmFault.IsActive = hasArmFault);
+
+                                    string hasElevatorFaultString = messageReceived.Arguments.First(s => s.ToString().ToLower().Contains("elevatorfault")).ToString();
+                                    bool hasElevatorFault = hasElevatorFaultString.Split(':')[1].Split(';')[0].ToLower().Equals("true");
+                                    Dispatcher.Invoke(() => ledElevatorFault.IsActive = hasElevatorFault);
+
+                                    string hasClimberFaultString = messageReceived.Arguments.First(s => s.ToString().ToLower().Contains("climberfault")).ToString();
+                                    bool hasClimberFault = hasClimberFaultString.Split(':')[1].Split(';')[0].ToLower().Equals("true");
+                                    Dispatcher.Invoke(() => ledClimberFault.IsActive = hasClimberFault);
+                                }
+                                catch (Exception ex)
+                                {
+
+                                }
+
+                                string hasEnabledString = messageReceived.Arguments.First(s => s.ToString().ToLower().Contains("enabled")).ToString();
+                                bool enabled = hasEnabledString.Split(':')[1].Split(';')[0].ToLower().Equals("true");
+
                                 if (prevEnabled != enabled && enabled)
                                 {
                                     if (ckLogger == null)
@@ -193,6 +208,11 @@ namespace CyberDash
         public static String GetTimestamp(DateTime value)
         {
             return value.ToString("yyyy-MM-dd-HH-mm-ss-ffff");
+        }
+
+        private void cmdCalibrate_Click(object sender, RoutedEventArgs e)
+        {
+
         }
     }
 
