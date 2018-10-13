@@ -20,6 +20,7 @@ using System.Windows.Shapes;
 using SharperOSC;
 using Emgu.CV;
 using Emgu.CV.Structure;
+using Ozeki.Media;
 
 namespace CyberDash
 {
@@ -32,9 +33,17 @@ namespace CyberDash
         private BackgroundWorker oscSender = new BackgroundWorker();
         private BackgroundWorker oscReceiver = new BackgroundWorker();
 
-        private readonly int PORT = 5801;
+        private readonly int PORT = 5805;
         private readonly string ROBOT_IP = "10.1.95.2";
         private bool runThread = true;
+
+        private DrawingImageProvider _bitmapSourceProvider;
+        private MediaConnector _connector;
+        private MJPEGConnection _mjpegConnection;
+
+        private static readonly string CAMERA_STR = "http://10.1.95.11/axis-cgi/mjpg/video.cgi?fps=20&compression=85&resolution=640x480";
+        private static readonly string CAMERA_USERNAME = "FRC";
+        private static readonly string CAMERA_PASSWORD = "FRC";
 
         public MainWindow()
         {
@@ -45,6 +54,29 @@ namespace CyberDash
 
             oscReceiver.DoWork += oscReceiverWorker_DoWork;
             oscReceiver.RunWorkerCompleted += oscReceiverWorker_RunWorkerCompleted;
+
+            _connector = new MediaConnector();
+            _bitmapSourceProvider = new DrawingImageProvider();
+            cameraViewer.SetImageProvider(_bitmapSourceProvider);
+        }
+
+        private void connectCamera()
+        {
+            if (_mjpegConnection != null)
+                _mjpegConnection.Disconnect();
+
+            var config = new OzConf_P_MJPEGClient(CAMERA_STR, CAMERA_USERNAME, CAMERA_PASSWORD);
+            _mjpegConnection = new MJPEGConnection(config);
+            //_mjpegConnection.Connect();
+            //_connector.Connect(_mjpegConnection.VideoChannel, _bitmapSourceProvider);
+            //cameraViewer.Start();
+        }
+
+        private void disconnectCamera()
+        {
+            if (_mjpegConnection == null) return;
+            _mjpegConnection.Disconnect();
+            cameraViewer.Stop();
         }
 
         private void Window_Loaded(object sender, RoutedEventArgs e)
@@ -54,8 +86,17 @@ namespace CyberDash
             this.MaxHeight = this.MinHeight = this.Height = sHeight - DRIVER_STATION_HEIGHT;
             this.MaxWidth = this.MinWidth = this.Width = sWidth;
             Logic.Move();
-            oscSender.RunWorkerAsync();
+           //oscSender.RunWorkerAsync();
             oscReceiver.RunWorkerAsync();
+
+            try
+            {
+                connectCamera();
+            }
+            catch (Exception)
+            {
+
+            }
         }
 
         private void oscSenderWorker_DoWork(object sender, DoWorkEventArgs e)
@@ -194,6 +235,14 @@ namespace CyberDash
 
         private void exitTriggered(int exitCode)
         {
+            try
+            {
+                disconnectCamera();
+            } catch (Exception)
+            {
+
+            }
+
             Environment.Exit(exitCode);
         }
 
