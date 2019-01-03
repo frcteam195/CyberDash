@@ -21,6 +21,9 @@ using SharperOSC;
 using Emgu.CV;
 using Emgu.CV.Structure;
 using Ozeki.Media;
+using SharpDX.DirectInput;
+using SharpDX.XInput;
+using CyberDash.Utilities;
 
 namespace CyberDash
 {
@@ -33,7 +36,8 @@ namespace CyberDash
         private BackgroundWorker oscSender = new BackgroundWorker();
         private BackgroundWorker oscReceiver = new BackgroundWorker();
 
-        private readonly int PORT = 5805;
+        private readonly int AUTO_DATA_PORT = 5805;
+        private readonly int JOYSTICK_DATA_PORT = 5806;
         private readonly string ROBOT_IP = "10.1.95.2";
         private bool runThread = true;
 
@@ -44,10 +48,18 @@ namespace CyberDash
         private static readonly string CAMERA_STR = "http://10.1.95.11/axis-cgi/mjpg/video.cgi?fps=20&compression=85&resolution=640x480";
         private static readonly string CAMERA_USERNAME = "FRC";
         private static readonly string CAMERA_PASSWORD = "FRC";
+        private List<FRCJoystick> joysticks = new List<FRCJoystick>();
+        private object joystickLock = new object();
+
+        private bool Enabled { get; set; } = false;
+
+        private Thread joystickCaptureThread;
 
         public MainWindow()
         {
             InitializeComponent();
+
+            enumerateJoysticks();
 
             oscSender.DoWork += oscSenderWorker_DoWork;
             oscSender.RunWorkerCompleted += oscSenderWorker_RunWorkerCompleted;
@@ -58,6 +70,157 @@ namespace CyberDash
             _connector = new MediaConnector();
             _bitmapSourceProvider = new DrawingImageProvider();
             cameraViewer.SetImageProvider(_bitmapSourceProvider);
+
+            joystickCaptureThread = new Thread(() =>
+            {
+                UDPSender udpSender = null;
+                try
+                {
+                    udpSender = new UDPSender(ROBOT_IP, JOYSTICK_DATA_PORT);
+                }
+                catch (Exception)
+                {
+                    MessageBox.Show("Error creating UDP Sender. Make sure your IP Address and port settings are correct!", "Dashboard", MessageBoxButton.OK, MessageBoxImage.Error);
+                    Environment.Exit(1);
+                }
+                ThreadRateControl trc = new ThreadRateControl();
+
+                List<OscMessage> messageList = new List<OscMessage>();
+                object lockObject = new object();
+                trc.Start();
+                while (runThread)
+                {
+                    messageList.Clear();
+                    lock (joystickLock)
+                    {
+                        Parallel.ForEach(joysticks, (j) =>
+                        {
+                            JoystickState js = j.dJoystick.GetCurrentState();
+                            List<object> lO = new List<object>();
+                            lO.Add(js.X);
+                            lO.Add(js.Y);
+                            lO.Add(js.Z);
+                            lO.Add(js.RotationX);
+                            lO.Add(js.RotationY);
+                            lO.Add(js.RotationZ);
+                            lO.Add(convertBoolArrToLong(js.Buttons));
+                            lO.Add(js.PointOfViewControllers[0]);
+                            lO.Add((long)DateTime.UtcNow.ToUniversalTime().Subtract(new DateTime(1970, 1, 1, 0, 0, 0, DateTimeKind.Utc)).TotalMilliseconds);
+                            lock (lockObject)
+                            {
+                                messageList.Add(new OscMessage("/Joysticks/" + j.Index, lO.ToArray()));
+                            }
+                        });
+                    }
+                    OscBundle messageBundle = new OscBundle((ulong)1, messageList.ToArray());
+                    udpSender.Send(messageBundle);
+
+                    trc.DoRateControl(10);
+                }
+                udpSender.Close();
+            });
+
+            joystickCaptureThread.Start();
+
+            System.Windows.Threading.DispatcherTimer refreshViewTimer = new System.Windows.Threading.DispatcherTimer();
+            refreshViewTimer.Tick += refreshViewTimer_Tick;
+            refreshViewTimer.Interval = new TimeSpan(0, 0, 0, 0, 100);
+            refreshViewTimer.Start();
+
+            System.Windows.Threading.DispatcherTimer refocusTimer = new System.Windows.Threading.DispatcherTimer();
+            refocusTimer.Tick += refocusTimer_Tick;
+            refocusTimer.Interval = new TimeSpan(0, 0, 0, 0, 100);
+            refocusTimer.Start();
+        }
+
+        private long convertBoolArrToLong(bool[] arr)
+        {
+            int maxSize = arr.Length > 64 ? 64 : arr.Length;
+            long val = 0;
+            for (int i = 0; i < maxSize; i++)
+            {
+                val |= arr[i] ? (long)(1 << i) : 0;
+            }
+            return val;
+        }
+
+        private void refreshViewTimer_Tick(object sender, EventArgs e)
+        {
+            if (!Enabled)
+            {
+                lstJoystick.Items.Refresh();
+            }
+        }
+
+        private void refocusTimer_Tick(object sender, EventArgs e)
+        {
+            if (Enabled)
+            {
+                this.Activate();
+                this.Focus();
+            }
+        }
+
+        private void enumerateJoysticks()
+        {
+            DirectInput directInput = new DirectInput();
+            List<FRCJoystick> prevJoysticks = new List<FRCJoystick>(joysticks);
+            lock (joystickLock)
+            {
+                joysticks.Clear();
+                foreach (DeviceInstance deviceInstance in directInput.GetDevices(SharpDX.DirectInput.DeviceType.Gamepad, DeviceEnumerationFlags.AllDevices))
+                {
+                    if (prevJoysticks.Exists(x => x.dJoystick.Information.InstanceGuid == deviceInstance.InstanceGuid))
+                    {
+                        joysticks.Add(prevJoysticks.Find(x => x.dJoystick.Information.InstanceGuid == deviceInstance.InstanceGuid));
+                    }
+                    else
+                    {
+                        joysticks.Add(new FRCJoystick(new Joystick(directInput, deviceInstance.InstanceGuid)));
+                    }
+                }
+
+                foreach (DeviceInstance deviceInstance in directInput.GetDevices(SharpDX.DirectInput.DeviceType.Joystick, DeviceEnumerationFlags.AllDevices))
+                {
+                    if (prevJoysticks.Exists(x => x.dJoystick.Information.InstanceGuid == deviceInstance.InstanceGuid))
+                    {
+                        joysticks.Add(prevJoysticks.Find(x => x.dJoystick.Information.InstanceGuid == deviceInstance.InstanceGuid));
+                    }
+                    else
+                    {
+                        joysticks.Add(new FRCJoystick(new Joystick(directInput, deviceInstance.InstanceGuid)));
+                    }
+                }
+            }
+
+            lstJoystick.ItemsSource = joysticks;
+            updateJoystickIndeces();
+        }
+
+        private void moveJoystick(bool up)
+        {
+            if (lstJoystick.SelectedIndex >= 0)
+            {
+                FRCJoystick f = (FRCJoystick)lstJoystick.SelectedItem;
+                int pIdx = lstJoystick.SelectedIndex;
+                lock (joystickLock)
+                {
+                    joysticks.RemoveAt(up ? pIdx-- : pIdx++);
+                    pIdx = pIdx < 0 ? 0 : pIdx;
+                    pIdx = pIdx >= joysticks.Count ? joysticks.Count : pIdx;
+                    joysticks.Insert(pIdx, f);
+                }
+            }
+            updateJoystickIndeces();
+        }
+
+        private void updateJoystickIndeces()
+        {
+            foreach (FRCJoystick f in lstJoystick.Items)
+            {
+                f.Index = lstJoystick.Items.IndexOf(f);
+            }
+            lstJoystick.Items.Refresh();
         }
 
         private void connectCamera()
@@ -104,7 +267,7 @@ namespace CyberDash
             UDPSender udpSender = null;
             try
             {
-                udpSender = new UDPSender(ROBOT_IP, PORT);
+                udpSender = new UDPSender(ROBOT_IP, AUTO_DATA_PORT);
             }
             catch (Exception)
             {
@@ -134,7 +297,7 @@ namespace CyberDash
 
         private void oscReceiverWorker_DoWork(object sender, DoWorkEventArgs e)
         {
-            var udpListener = new UDPListener(PORT);
+            var udpListener = new UDPListener(AUTO_DATA_PORT);
             OscMessage messageReceived = null;
             bool prevEnabled = false;
             CKLogHandler ckLogger = null;
@@ -174,16 +337,16 @@ namespace CyberDash
                                 }
 
                                 string hasEnabledString = messageReceived.Arguments.First(s => s.ToString().ToLower().Contains("enabled")).ToString();
-                                bool enabled = hasEnabledString.Split(':')[1].Split(';')[0].ToLower().Equals("true");
+                                Enabled = hasEnabledString.Split(':')[1].Split(';')[0].ToLower().Equals("true");
 
-                                if (prevEnabled != enabled && enabled)
+                                if (prevEnabled != Enabled && Enabled)
                                 {
                                     if (ckLogger == null)
                                     {
                                         ckLogger = new CKLogHandler(@"C:\Logs\OSCLog_" + GetTimestamp(DateTime.Now) + ".csv");
                                         ckLogger.StartLogging();
                                     }
-                                    prevEnabled = enabled;
+                                    prevEnabled = Enabled;
                                 }
 
                                 if (ckLogger != null)
@@ -207,12 +370,12 @@ namespace CyberDash
                                     }
                                 }
 
-                                if (prevEnabled != enabled && !enabled)
+                                if (prevEnabled != Enabled && !Enabled)
                                 {
                                     if (ckLogger != null)
                                         ckLogger.StopLogging();
                                     ckLogger = null;
-                                    prevEnabled = enabled;
+                                    prevEnabled = Enabled;
                                 }
                             }
                             catch (Exception) { }
@@ -262,6 +425,21 @@ namespace CyberDash
         private void cmdCalibrate_Click(object sender, RoutedEventArgs e)
         {
 
+        }
+
+        private void cmdRefresh_Click(object sender, RoutedEventArgs e)
+        {
+            enumerateJoysticks();
+        }
+
+        private void cmdUp_Click(object sender, RoutedEventArgs e)
+        {
+            moveJoystick(true);
+        }
+
+        private void cmdDown_Click(object sender, RoutedEventArgs e)
+        {
+            moveJoystick(false);
         }
     }
 

@@ -52,6 +52,14 @@
                         <Button x:Name="cmdCalibrate" FontSize="40" Content="Calibrate" Margin="402,460,403,258" Click="cmdCalibrate_Click" />
                     </Grid>
                 </TabItem>
+                <TabItem Header="JoystickSelection" HorizontalAlignment="Stretch" VerticalAlignment="Stretch">
+                    <Grid Background="#2a2a2a" HorizontalAlignment="Stretch" VerticalAlignment="Stretch">
+                        <ListBox x:Name="lstJoystick" HorizontalAlignment="Left" Height="252" Margin="95,93,0,0" VerticalAlignment="Top" Width="272"/>
+                        <Button x:Name="cmdRefresh" Content="Refresh" Click="cmdRefresh_Click" HorizontalAlignment="Left"  FontSize="40" Margin="95,377,0,0" VerticalAlignment="Top" Width="272" Height="62" RenderTransformOrigin="0.963,0.419"/>
+                        <Button x:Name="cmdUp" Content="Up" Click="cmdUp_Click" HorizontalAlignment="Left"  FontSize="40" Margin="372,148,0,0" VerticalAlignment="Top" Width="218" Height="62" RenderTransformOrigin="0.963,0.419"/>
+                        <Button x:Name="cmdDown" Content="Down" Click="cmdDown_Click" HorizontalAlignment="Left"  FontSize="40" Margin="372,241,0,0" VerticalAlignment="Top" Width="218" Height="62" RenderTransformOrigin="0.963,0.419"/>
+                    </Grid>
+                </TabItem>
             </TabControl>
         </Grid>
     </Grid>
