@@ -62,8 +62,7 @@ namespace CyberDash.Utilities
             {
                 try
                 {
-                    JoystickState joystickState = new JoystickState();
-                    dJoystick.GetCurrentState(ref joystickState);
+                    JoystickState joystickState = dJoystick.GetCurrentState();
 
                     foreach (bool b in joystickState.Buttons)
                     {
@@ -86,7 +85,18 @@ namespace CyberDash.Utilities
             }
             else if (xJoystick != null)
             {
-                return prefix + xJoystick.ToString();
+                State state = xJoystick.GetState();
+                GamepadButtonFlags buttons = state.Gamepad.Buttons;                
+                if(buttons > 0)
+                {
+                    prefix = "(*)->";
+                }
+                else
+                {
+                    prefix = "";
+                }
+
+                return prefix + "Xbox Controller";
             }
             else
             {

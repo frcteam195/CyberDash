@@ -24,6 +24,7 @@ using Ozeki.Media;
 using SharpDX.DirectInput;
 using SharpDX.XInput;
 using CyberDash.Utilities;
+using System.Management;
 
 namespace CyberDash
 {
@@ -38,7 +39,8 @@ namespace CyberDash
 
         private readonly int AUTO_DATA_PORT = 5805;
         private readonly int JOYSTICK_DATA_PORT = 5806;
-        private readonly string ROBOT_IP = "10.1.95.2";
+        //private readonly string ROBOT_IP = "10.1.95.2";
+        private readonly string ROBOT_IP = "10.0.2.91";
         private bool runThread = true;
 
         private DrawingImageProvider _bitmapSourceProvider;
@@ -95,17 +97,82 @@ namespace CyberDash
                     {
                         Parallel.ForEach(joysticks, (j) =>
                         {
-                            JoystickState js = j.dJoystick.GetCurrentState();
                             List<object> lO = new List<object>();
-                            lO.Add(js.X);
-                            lO.Add(js.Y);
-                            lO.Add(js.Z);
-                            lO.Add(js.RotationX);
-                            lO.Add(js.RotationY);
-                            lO.Add(js.RotationZ);
-                            lO.Add(convertBoolArrToLong(js.Buttons));
-                            lO.Add(js.PointOfViewControllers[0]);
-                            lO.Add((long)DateTime.UtcNow.ToUniversalTime().Subtract(new DateTime(1970, 1, 1, 0, 0, 0, DateTimeKind.Utc)).TotalMilliseconds);
+                            if (j.xJoystick != null)
+                            {
+                                Gamepad gamepad = j.xJoystick.GetState().Gamepad;
+                                lO.Add((int)gamepad.LeftThumbX);
+                                lO.Add((int)gamepad.LeftThumbY);
+                                lO.Add((int)(gamepad.LeftTrigger * 128.5));
+                                lO.Add((int)(gamepad.RightTrigger * 128.5));
+                                lO.Add((int)gamepad.RightThumbX);
+                                lO.Add((int)gamepad.RightThumbY);
+
+                                bool[] buttonArr = new bool[10];
+                                buttonArr[0] = gamepad.Buttons.HasFlag(GamepadButtonFlags.A);
+                                buttonArr[1] = gamepad.Buttons.HasFlag(GamepadButtonFlags.B);
+                                buttonArr[2] = gamepad.Buttons.HasFlag(GamepadButtonFlags.X);
+                                buttonArr[3] = gamepad.Buttons.HasFlag(GamepadButtonFlags.Y);
+                                buttonArr[4] = gamepad.Buttons.HasFlag(GamepadButtonFlags.LeftShoulder);
+                                buttonArr[5] = gamepad.Buttons.HasFlag(GamepadButtonFlags.RightShoulder);
+                                buttonArr[6] = gamepad.Buttons.HasFlag(GamepadButtonFlags.Start);
+                                buttonArr[7] = gamepad.Buttons.HasFlag(GamepadButtonFlags.Back);
+                                buttonArr[8] = gamepad.Buttons.HasFlag(GamepadButtonFlags.LeftThumb);
+                                buttonArr[9] = gamepad.Buttons.HasFlag(GamepadButtonFlags.RightThumb);
+                                lO.Add(convertBoolArrToLong(buttonArr));
+
+                                gamepad.Buttons.HasFlag(GamepadButtonFlags.DPadUp);
+                                gamepad.Buttons.HasFlag(GamepadButtonFlags.DPadRight);
+                                gamepad.Buttons.HasFlag(GamepadButtonFlags.DPadDown);
+                                gamepad.Buttons.HasFlag(GamepadButtonFlags.DPadLeft);
+
+                                int pov = -1;
+                                switch ((ushort)gamepad.Buttons)
+                                {
+                                    case 1:
+                                        pov = 0;
+                                        break;
+                                    case 9:
+                                        pov = 45;
+                                        break;
+                                    case 8:
+                                        pov = 90;
+                                        break;
+                                    case 10:
+                                        pov = 135;
+                                        break;
+                                    case 2:
+                                        pov = 180;
+                                        break;
+                                    case 6:
+                                        pov = 225;
+                                        break;
+                                    case 4:
+                                        pov = 270;
+                                        break;
+                                    case 5:
+                                        pov = 315;
+                                        break;
+                                    default:
+                                        pov = -1;
+                                        break;
+                                }
+                                lO.Add(pov * 100);
+                                lO.Add((long)DateTime.UtcNow.ToUniversalTime().Subtract(new DateTime(1970, 1, 1, 0, 0, 0, DateTimeKind.Utc)).TotalMilliseconds);
+                            }
+                            else
+                            {
+                                JoystickState js = j.dJoystick.GetCurrentState();
+                                lO.Add(js.X - 32768);
+                                lO.Add(js.Y - 32768);
+                                lO.Add(js.Z - 32768);
+                                lO.Add(js.RotationX - 32768);
+                                lO.Add(js.RotationY - 32768);
+                                lO.Add(js.RotationZ - 32768);
+                                lO.Add(convertBoolArrToLong(js.Buttons));
+                                lO.Add(js.PointOfViewControllers[0]);
+                                lO.Add((long)DateTime.UtcNow.ToUniversalTime().Subtract(new DateTime(1970, 1, 1, 0, 0, 0, DateTimeKind.Utc)).TotalMilliseconds);
+                            }
                             lock (lockObject)
                             {
                                 messageList.Add(new OscMessage("/Joysticks/" + j.Index, lO.ToArray()));
@@ -165,36 +232,89 @@ namespace CyberDash
         {
             DirectInput directInput = new DirectInput();
             List<FRCJoystick> prevJoysticks = new List<FRCJoystick>(joysticks);
+            List<string> deviceIds = GetXInputCapableDevices();
             lock (joystickLock)
             {
                 joysticks.Clear();
                 foreach (DeviceInstance deviceInstance in directInput.GetDevices(SharpDX.DirectInput.DeviceType.Gamepad, DeviceEnumerationFlags.AllDevices))
                 {
-                    if (prevJoysticks.Exists(x => x.dJoystick.Information.InstanceGuid == deviceInstance.InstanceGuid))
+                    ulong Data1 = BitConverter.ToUInt32(deviceInstance.ProductGuid.ToByteArray(), 0);
+                    if (!deviceIds.Exists(x => x.Contains(Data1.ToString("X"))))
                     {
-                        joysticks.Add(prevJoysticks.Find(x => x.dJoystick.Information.InstanceGuid == deviceInstance.InstanceGuid));
-                    }
-                    else
-                    {
-                        joysticks.Add(new FRCJoystick(new Joystick(directInput, deviceInstance.InstanceGuid)));
+                        if (prevJoysticks.Exists(x => x.dJoystick.Information.InstanceGuid == deviceInstance.InstanceGuid))
+                        {
+                            joysticks.Add(prevJoysticks.Find(x => x.dJoystick.Information.InstanceGuid == deviceInstance.InstanceGuid));
+                        }
+                        else
+                        {
+                            joysticks.Add(new FRCJoystick(new Joystick(directInput, deviceInstance.InstanceGuid)));
+                        }
                     }
                 }
 
                 foreach (DeviceInstance deviceInstance in directInput.GetDevices(SharpDX.DirectInput.DeviceType.Joystick, DeviceEnumerationFlags.AllDevices))
                 {
-                    if (prevJoysticks.Exists(x => x.dJoystick.Information.InstanceGuid == deviceInstance.InstanceGuid))
+                    ulong Data1 = BitConverter.ToUInt32(deviceInstance.ProductGuid.ToByteArray(), 0);
+                    if (!deviceIds.Exists(x => x.Contains(Data1.ToString("X"))))
                     {
-                        joysticks.Add(prevJoysticks.Find(x => x.dJoystick.Information.InstanceGuid == deviceInstance.InstanceGuid));
+                        if (prevJoysticks.Exists(x => x.dJoystick.Information.InstanceGuid == deviceInstance.InstanceGuid))
+                        {
+                            joysticks.Add(prevJoysticks.Find(x => x.dJoystick.Information.InstanceGuid == deviceInstance.InstanceGuid));
+                        }
+                        else
+                        {
+                            joysticks.Add(new FRCJoystick(new Joystick(directInput, deviceInstance.InstanceGuid)));
+                        }
                     }
-                    else
-                    {
-                        joysticks.Add(new FRCJoystick(new Joystick(directInput, deviceInstance.InstanceGuid)));
-                    }
+                }
+            }
+
+            Controller[] controllers = new[] { new Controller(UserIndex.One), new Controller(UserIndex.Two), new Controller(UserIndex.Three), new Controller(UserIndex.Four) };
+            foreach (Controller c in controllers)
+            {
+                if (c.IsConnected)
+                {
+                    joysticks.Add(new FRCJoystick(c));
                 }
             }
 
             lstJoystick.ItemsSource = joysticks;
             updateJoystickIndeces();
+        }
+
+        private List<string> GetXInputCapableDevices()
+        {
+            List<string> deviceIds = new List<string>();
+
+            try
+            {
+                ManagementObjectSearcher searcher = new ManagementObjectSearcher("root\\cimv2", "SELECT * FROM Win32_PnPEntity");
+                foreach (ManagementObject queryObj in searcher.Get())
+                {
+
+                    if (queryObj["DeviceID"] != null)
+                    {
+                        string pGuid = "";
+                        string s = queryObj["DeviceID"].ToString();
+                        if (s.Contains("IG_"))
+                        {
+                            string[] sArr = s.Split(new string[] { "\\", "&", "_" }, StringSplitOptions.RemoveEmptyEntries);
+                            if (sArr.Length >= 4)
+                            {
+                                pGuid = sArr[4].TrimStart(new Char[] { '0' }) + sArr[2];
+                            }
+                        }
+                        else
+                            continue;
+                        deviceIds.Add(pGuid);
+                    }
+                }
+            }
+            catch (ManagementException e)
+            {
+                MessageBox.Show("An error occurred while querying for WMI data: " + e.Message);
+            }
+            return deviceIds;
         }
 
         private void moveJoystick(bool up)
@@ -260,6 +380,9 @@ namespace CyberDash
             {
 
             }
+
+            this.Activate();
+            this.Focus();
         }
 
         private void oscSenderWorker_DoWork(object sender, DoWorkEventArgs e)
