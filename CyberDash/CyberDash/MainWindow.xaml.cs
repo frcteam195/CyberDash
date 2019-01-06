@@ -39,8 +39,8 @@ namespace CyberDash
 
         private readonly int AUTO_DATA_PORT = 5805;
         private readonly int JOYSTICK_DATA_PORT = 5806;
-        //private readonly string ROBOT_IP = "10.1.95.2";
-        private readonly string ROBOT_IP = "10.0.2.91";
+        private readonly string ROBOT_IP = "10.1.95.2";
+        //private readonly string ROBOT_IP = "10.0.2.91";
         private bool runThread = true;
 
         private DrawingImageProvider _bitmapSourceProvider;
@@ -312,7 +312,7 @@ namespace CyberDash
             }
             catch (ManagementException e)
             {
-                MessageBox.Show("An error occurred while querying for WMI data: " + e.Message);
+                Console.WriteLine("An error occurred while querying for WMI data: " + e.Message);
             }
             return deviceIds;
         }
@@ -369,7 +369,7 @@ namespace CyberDash
             this.MaxHeight = this.MinHeight = this.Height = sHeight - DRIVER_STATION_HEIGHT;
             this.MaxWidth = this.MinWidth = this.Width = sWidth;
             Logic.Move();
-           //oscSender.RunWorkerAsync();
+            oscSender.RunWorkerAsync();
             oscReceiver.RunWorkerAsync();
 
             try
