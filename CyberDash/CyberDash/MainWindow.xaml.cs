@@ -97,85 +97,96 @@ namespace CyberDash
                     {
                         Parallel.ForEach(joysticks, (j) =>
                         {
-                            List<object> lO = new List<object>();
-                            if (j.xJoystick != null)
+                            try
                             {
-                                Gamepad gamepad = j.xJoystick.GetState().Gamepad;
-                                lO.Add((int)gamepad.LeftThumbX);
-                                lO.Add((int)gamepad.LeftThumbY);
-                                lO.Add((int)(gamepad.LeftTrigger * 128.5));
-                                lO.Add((int)(gamepad.RightTrigger * 128.5));
-                                lO.Add((int)gamepad.RightThumbX);
-                                lO.Add((int)gamepad.RightThumbY);
-
-                                bool[] buttonArr = new bool[10];
-                                buttonArr[0] = gamepad.Buttons.HasFlag(GamepadButtonFlags.A);
-                                buttonArr[1] = gamepad.Buttons.HasFlag(GamepadButtonFlags.B);
-                                buttonArr[2] = gamepad.Buttons.HasFlag(GamepadButtonFlags.X);
-                                buttonArr[3] = gamepad.Buttons.HasFlag(GamepadButtonFlags.Y);
-                                buttonArr[4] = gamepad.Buttons.HasFlag(GamepadButtonFlags.LeftShoulder);
-                                buttonArr[5] = gamepad.Buttons.HasFlag(GamepadButtonFlags.RightShoulder);
-                                buttonArr[6] = gamepad.Buttons.HasFlag(GamepadButtonFlags.Start);
-                                buttonArr[7] = gamepad.Buttons.HasFlag(GamepadButtonFlags.Back);
-                                buttonArr[8] = gamepad.Buttons.HasFlag(GamepadButtonFlags.LeftThumb);
-                                buttonArr[9] = gamepad.Buttons.HasFlag(GamepadButtonFlags.RightThumb);
-                                lO.Add(convertBoolArrToLong(buttonArr));
-
-                                gamepad.Buttons.HasFlag(GamepadButtonFlags.DPadUp);
-                                gamepad.Buttons.HasFlag(GamepadButtonFlags.DPadRight);
-                                gamepad.Buttons.HasFlag(GamepadButtonFlags.DPadDown);
-                                gamepad.Buttons.HasFlag(GamepadButtonFlags.DPadLeft);
-
-                                int pov = -1;
-                                switch ((ushort)gamepad.Buttons)
+                                List<object> lO = new List<object>();
+                                if (j != null)
                                 {
-                                    case 1:
-                                        pov = 0;
-                                        break;
-                                    case 9:
-                                        pov = 45;
-                                        break;
-                                    case 8:
-                                        pov = 90;
-                                        break;
-                                    case 10:
-                                        pov = 135;
-                                        break;
-                                    case 2:
-                                        pov = 180;
-                                        break;
-                                    case 6:
-                                        pov = 225;
-                                        break;
-                                    case 4:
-                                        pov = 270;
-                                        break;
-                                    case 5:
-                                        pov = 315;
-                                        break;
-                                    default:
-                                        pov = -1;
-                                        break;
+                                    if (j.xJoystick != null)
+                                    {
+                                        Gamepad gamepad = j.xJoystick.GetState().Gamepad;
+                                        lO.Add((int)gamepad.LeftThumbX);
+                                        lO.Add((int)gamepad.LeftThumbY);
+                                        lO.Add((int)(gamepad.LeftTrigger * 128.5));
+                                        lO.Add((int)(gamepad.RightTrigger * 128.5));
+                                        lO.Add((int)gamepad.RightThumbX);
+                                        lO.Add((int)gamepad.RightThumbY);
+
+                                        bool[] buttonArr = new bool[10];
+                                        buttonArr[0] = gamepad.Buttons.HasFlag(GamepadButtonFlags.A);
+                                        buttonArr[1] = gamepad.Buttons.HasFlag(GamepadButtonFlags.B);
+                                        buttonArr[2] = gamepad.Buttons.HasFlag(GamepadButtonFlags.X);
+                                        buttonArr[3] = gamepad.Buttons.HasFlag(GamepadButtonFlags.Y);
+                                        buttonArr[4] = gamepad.Buttons.HasFlag(GamepadButtonFlags.LeftShoulder);
+                                        buttonArr[5] = gamepad.Buttons.HasFlag(GamepadButtonFlags.RightShoulder);
+                                        buttonArr[6] = gamepad.Buttons.HasFlag(GamepadButtonFlags.Start);
+                                        buttonArr[7] = gamepad.Buttons.HasFlag(GamepadButtonFlags.Back);
+                                        buttonArr[8] = gamepad.Buttons.HasFlag(GamepadButtonFlags.LeftThumb);
+                                        buttonArr[9] = gamepad.Buttons.HasFlag(GamepadButtonFlags.RightThumb);
+                                        lO.Add(convertBoolArrToLong(buttonArr));
+
+                                        gamepad.Buttons.HasFlag(GamepadButtonFlags.DPadUp);
+                                        gamepad.Buttons.HasFlag(GamepadButtonFlags.DPadRight);
+                                        gamepad.Buttons.HasFlag(GamepadButtonFlags.DPadDown);
+                                        gamepad.Buttons.HasFlag(GamepadButtonFlags.DPadLeft);
+
+                                        int pov = -1;
+                                        switch ((ushort)gamepad.Buttons)
+                                        {
+                                            case 1:
+                                                pov = 0;
+                                                break;
+                                            case 9:
+                                                pov = 45;
+                                                break;
+                                            case 8:
+                                                pov = 90;
+                                                break;
+                                            case 10:
+                                                pov = 135;
+                                                break;
+                                            case 2:
+                                                pov = 180;
+                                                break;
+                                            case 6:
+                                                pov = 225;
+                                                break;
+                                            case 4:
+                                                pov = 270;
+                                                break;
+                                            case 5:
+                                                pov = 315;
+                                                break;
+                                            default:
+                                                pov = -1;
+                                                break;
+                                        }
+                                        lO.Add(pov * 100);
+                                        lO.Add((long)DateTime.UtcNow.ToUniversalTime().Subtract(new DateTime(1970, 1, 1, 0, 0, 0, DateTimeKind.Utc)).TotalMilliseconds);
+                                    }
+                                    else
+                                    {
+                                        JoystickState js = j.dJoystick.GetCurrentState();
+                                        lO.Add(js.X - 32768);
+                                        lO.Add(js.Y - 32768);
+                                        lO.Add(js.Z - 32768);
+                                        lO.Add(js.RotationX - 32768);
+                                        lO.Add(js.RotationY - 32768);
+                                        lO.Add(js.RotationZ - 32768);
+                                        lO.Add(convertBoolArrToLong(js.Buttons));
+                                        lO.Add(js.PointOfViewControllers[0]);
+                                        lO.Add((long)DateTime.UtcNow.ToUniversalTime().Subtract(new DateTime(1970, 1, 1, 0, 0, 0, DateTimeKind.Utc)).TotalMilliseconds);
+                                    }
+                                    lock (lockObject)
+                                    {
+                                        messageList.Add(new OscMessage("/Joysticks/" + j.Index, lO.ToArray()));
+                                    }
                                 }
-                                lO.Add(pov * 100);
-                                lO.Add((long)DateTime.UtcNow.ToUniversalTime().Subtract(new DateTime(1970, 1, 1, 0, 0, 0, DateTimeKind.Utc)).TotalMilliseconds);
                             }
-                            else
+                            catch (Exception ex)
                             {
-                                JoystickState js = j.dJoystick.GetCurrentState();
-                                lO.Add(js.X - 32768);
-                                lO.Add(js.Y - 32768);
-                                lO.Add(js.Z - 32768);
-                                lO.Add(js.RotationX - 32768);
-                                lO.Add(js.RotationY - 32768);
-                                lO.Add(js.RotationZ - 32768);
-                                lO.Add(convertBoolArrToLong(js.Buttons));
-                                lO.Add(js.PointOfViewControllers[0]);
-                                lO.Add((long)DateTime.UtcNow.ToUniversalTime().Subtract(new DateTime(1970, 1, 1, 0, 0, 0, DateTimeKind.Utc)).TotalMilliseconds);
-                            }
-                            lock (lockObject)
-                            {
-                                messageList.Add(new OscMessage("/Joysticks/" + j.Index, lO.ToArray()));
+                                Console.WriteLine(ex.ToString());
+                                //TODO: Invoke joystick refresh
                             }
                         });
                     }
