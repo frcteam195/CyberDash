@@ -40,10 +40,10 @@
                             <ComboBoxItem Content="Start From Center"/>
                             <ComboBoxItem Content="Start From Right"/>
                         </ComboBox>
-                        <Label Content="Scale Priority:" HorizontalAlignment="Left" Margin="577,171,0,0" VerticalAlignment="Top" FontSize="25" Foreground="White" Grid.Column="1" />
-                        <ComboBox x:Name="cboAutoScalePriority" HorizontalAlignment="Left" Margin="577,220,0,0" VerticalAlignment="Top" SelectedIndex="0" Width="268" Height="42" HorizontalContentAlignment="Center" VerticalContentAlignment="Center" FontSize="25" Grid.Column="1">
-                            <ComboBoxItem Content="Scale Will Be Low"/>
-                            <ComboBoxItem Content="Scale Will Be High"/>
+                        <Label Content="Auto Mode:" HorizontalAlignment="Left" Margin="577,171,0,0" VerticalAlignment="Top" FontSize="25" Foreground="White" Grid.Column="1" />
+                        <ComboBox x:Name="cboAutoMode" HorizontalAlignment="Left" Margin="577,220,0,0" VerticalAlignment="Top" SelectedIndex="0" Width="268" Height="42" HorizontalContentAlignment="Center" VerticalContentAlignment="Center" FontSize="25" Grid.Column="1">
+                            <ComboBoxItem Content="Mode 1"/>
+                            <ComboBoxItem Content="Mode 2"/>
                         </ComboBox>
                     </Grid>
                 </TabItem>

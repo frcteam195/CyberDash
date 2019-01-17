@@ -411,11 +411,14 @@ namespace CyberDash
 
             while (runThread)
             {
-                int autoIndex = 0;
-                Dispatcher.Invoke(() => autoIndex = cboAutoStartSelection.SelectedIndex);
+                int autoStartPositionIndex = -1;
+                int autoModeIndex = -1;
+                Dispatcher.Invoke(() => autoStartPositionIndex = cboAutoStartSelection.SelectedIndex);
+                Dispatcher.Invoke(() => autoStartPositionIndex = cboAutoMode.SelectedIndex);
 
                 var message = new OscMessage("/AutoData",
-                    (int)autoIndex);
+                    (int)autoStartPositionIndex,
+                    (int)autoModeIndex);
                 udpSender.Send(message);
 
                 Thread.Sleep(100);
