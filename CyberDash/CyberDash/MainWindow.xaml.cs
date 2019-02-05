@@ -18,8 +18,6 @@ using System.Windows.Navigation;
 using System.Windows.Shapes;
 
 using SharperOSC;
-using Emgu.CV;
-using Emgu.CV.Structure;
 using SharpDX.DirectInput;
 using SharpDX.XInput;
 using CyberDash.Utilities;
