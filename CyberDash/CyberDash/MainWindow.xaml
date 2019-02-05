@@ -5,6 +5,7 @@
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
         xmlns:local="clr-namespace:CyberDash"
         xmlns:panelControls="clr-namespace:PanelControls;assembly=PanelControls"
+        xmlns:lvc="clr-namespace:LiveCharts.Wpf;assembly=LiveCharts.Wpf"
         mc:Ignorable="d"
         Loaded="Window_Loaded"
         Background="#2a2a2a"
@@ -46,9 +47,9 @@
                         </ComboBox>
                     </Grid>
                 </TabItem>
-                <TabItem Header="Camera" HorizontalAlignment="Stretch" VerticalAlignment="Stretch">
+                <TabItem Header="Motor Current" HorizontalAlignment="Stretch" VerticalAlignment="Stretch">
                     <Grid Background="#2a2a2a" HorizontalAlignment="Stretch" VerticalAlignment="Stretch">
-                        <Button x:Name="cmdCalibrate" FontSize="40" Content="Calibrate" Margin="402,460,403,258" Click="cmdCalibrate_Click" />
+                        <lvc:CartesianChart x:Name="motorCurrentChart" LegendLocation="Right" Foreground="White" />
                     </Grid>
                 </TabItem>
                 <TabItem Header="JoystickSelection" HorizontalAlignment="Stretch" VerticalAlignment="Stretch">

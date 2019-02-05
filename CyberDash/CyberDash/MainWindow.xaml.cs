@@ -25,6 +25,10 @@ using System.Management;
 using System.Net.Sockets;
 using System.Net;
 
+using LiveCharts;
+using LiveCharts.Wpf;
+using LiveCharts.Geared;
+
 namespace CyberDash
 {
     /// <summary>
@@ -50,6 +54,8 @@ namespace CyberDash
 
         private Thread joystickCaptureThread;
         private Thread cameraCaptureThread;
+
+        private SeriesCollection motorCurrentList = new SeriesCollection();
 
         public MainWindow()
         {
@@ -208,6 +214,20 @@ namespace CyberDash
             });
 
             cameraCaptureThread.Start();
+
+
+            motorCurrentChart.AxisX.Add(new Axis
+            {
+                Title = "Sample",
+                MaxWidth = 100,
+            });
+
+            motorCurrentChart.AxisY.Add(new Axis
+            {
+                Title = "Value",
+                MaxWidth = 100,
+            });
+
 
             System.Windows.Threading.DispatcherTimer refreshViewTimer = new System.Windows.Threading.DispatcherTimer();
             refreshViewTimer.Tick += refreshViewTimer_Tick;
@@ -443,22 +463,22 @@ namespace CyberDash
                         case "/LogData":
                             try
                             {
-
+                                List<string> stringList = messageReceived.Arguments.Select(s => s.ToString()).ToList();
                                 try
                                 {
-                                    string hasCubeString = messageReceived.Arguments.First(s => s.ToString().ToLower().Contains("hascube")).ToString();
+                                    string hasCubeString = stringList.First(s => s.ToLower().Contains("hascube")).ToString();
                                     bool hasCube = hasCubeString.Split(':')[1].Split(';')[0].ToLower().Equals("true");
                                     Dispatcher.Invoke(() => ledHasCube.IsActive = hasCube);
 
-                                    string hasArmFaultString = messageReceived.Arguments.First(s => s.ToString().ToLower().Contains("armfault")).ToString();
+                                    string hasArmFaultString = stringList.First(s => s.ToLower().Contains("armfault")).ToString();
                                     bool hasArmFault = hasArmFaultString.Split(':')[1].Split(';')[0].ToLower().Equals("true");
                                     Dispatcher.Invoke(() => ledArmFault.IsActive = hasArmFault);
 
-                                    string hasElevatorFaultString = messageReceived.Arguments.First(s => s.ToString().ToLower().Contains("elevatorfault")).ToString();
+                                    string hasElevatorFaultString = stringList.First(s => s.ToLower().Contains("elevatorfault")).ToString();
                                     bool hasElevatorFault = hasElevatorFaultString.Split(':')[1].Split(';')[0].ToLower().Equals("true");
                                     Dispatcher.Invoke(() => ledElevatorFault.IsActive = hasElevatorFault);
 
-                                    string hasClimberFaultString = messageReceived.Arguments.First(s => s.ToString().ToLower().Contains("climberfault")).ToString();
+                                    string hasClimberFaultString = stringList.First(s => s.ToLower().Contains("climberfault")).ToString();
                                     bool hasClimberFault = hasClimberFaultString.Split(':')[1].Split(';')[0].ToLower().Equals("true");
                                     Dispatcher.Invoke(() => ledClimberFault.IsActive = hasClimberFault);
                                 }
@@ -467,7 +487,40 @@ namespace CyberDash
 
                                 }
 
-                                string hasEnabledString = messageReceived.Arguments.First(s => s.ToString().ToLower().Contains("enabled")).ToString();
+                                try
+                                {
+                                    List<string> motorCurrentPacketList = stringList.FindAll(s => s.ToLower().Contains("current"));
+                                    if (motorCurrentPacketList.Count != motorCurrentList.Count)
+                                    {
+                                        motorCurrentList.Clear();
+                                        motorCurrentPacketList.ForEach((s) =>
+                                        {
+                                            GLineSeries g = new GLineSeries
+                                            {
+                                                Title = s.Split(':')[0],
+                                                Values = new ConstrainedGearedValues<double>(50),
+                                                PointGeometry = null,
+                                            };
+                                            motorCurrentList.Add(g);
+                                        });
+                                        Dispatcher.Invoke(() => {
+                                            motorCurrentChart.Series = null;
+                                            motorCurrentChart.Series = motorCurrentList;
+                                        });
+                                    }
+
+                                    for (int i = 0; i < motorCurrentPacketList.Count; i++)
+                                    {
+                                        double val = Double.Parse(motorCurrentPacketList[i].Split(':')[1].Split(';')[0]);
+                                        motorCurrentList[i].Values.Add(val);
+                                    }
+                                }
+                                catch (Exception ex)
+                                {
+
+                                }
+
+                                string hasEnabledString = stringList.First(s => s.ToLower().Contains("enabled")).ToString();
                                 Enabled = hasEnabledString.Split(':')[1].Split(';')[0].ToLower().Equals("true");
 
                                 if (prevEnabled != Enabled && Enabled)
@@ -484,17 +537,15 @@ namespace CyberDash
                                 {
                                     try
                                     {
-                                        List<string> listString;
+                                        List<string> logDataList;
                                         if (!ckLogger.HeadersWritten)
                                         {
-                                            var ls = new List<object>();
-                                            ls.AddRange(messageReceived.Arguments);
-                                            listString = ls.Select(s => s.ToString().Split(':')[0]).ToList();
-                                            ckLogger.WriteCSVHeaders(listString);
+                                            logDataList = stringList.Select(s => s.Split(':')[0]).ToList();
+                                            ckLogger.WriteCSVHeaders(logDataList);
                                         }
 
-                                        listString = messageReceived.Arguments.Select(s => s.ToString().Split(':')[1].Split(';')[0]).ToList();
-                                        ckLogger.LogData(listString);
+                                        logDataList = stringList.Select(s => s.Split(':')[1].Split(';')[0]).ToList();
+                                        ckLogger.LogData(logDataList);
                                     } catch (Exception ex)
                                     {
 
