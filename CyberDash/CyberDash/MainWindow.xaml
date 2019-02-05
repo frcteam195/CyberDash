@@ -3,7 +3,6 @@
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
         xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
-        xmlns:cam="clr-namespace:Ozeki.Media;assembly=OzekiSDK"
         xmlns:local="clr-namespace:CyberDash"
         xmlns:panelControls="clr-namespace:PanelControls;assembly=PanelControls"
         mc:Ignorable="d"
@@ -20,7 +19,7 @@
         <Grid.RowDefinitions>
             <RowDefinition Height="*"/>
         </Grid.RowDefinitions>
-        <cam:VideoViewerWPF x:Name="cameraViewer" Grid.Row="0" Grid.Column="0" Width="640" MinWidth="640" MaxWidth="640" Height="480" MinHeight="480" MaxHeight="480" VerticalAlignment="Center"  HorizontalAlignment="Center" Background="Black"/>
+        <Image x:Name="imgViewer" Grid.Row="0" Grid.Column="0" Height="480" Width="640" MinWidth="640" MaxWidth="640" MinHeight="480" MaxHeight="480"  />
         <!--<MediaElement x:Name="cameraViewer" Grid.Row="0" Grid.Column="0" Width="640" MinWidth="640" MaxWidth="640" Height="480" MinHeight="480" MaxHeight="480" VerticalAlignment="Center"  HorizontalAlignment="Center"/>-->
         <Grid Grid.Column="1" Grid.Row="0">
             <TabControl HorizontalAlignment="Stretch" VerticalAlignment="Stretch">

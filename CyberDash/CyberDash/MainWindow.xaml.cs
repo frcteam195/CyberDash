@@ -20,11 +20,12 @@ using System.Windows.Shapes;
 using SharperOSC;
 using Emgu.CV;
 using Emgu.CV.Structure;
-using Ozeki.Media;
 using SharpDX.DirectInput;
 using SharpDX.XInput;
 using CyberDash.Utilities;
 using System.Management;
+using System.Net.Sockets;
+using System.Net;
 
 namespace CyberDash
 {
@@ -37,25 +38,20 @@ namespace CyberDash
         private BackgroundWorker oscSender = new BackgroundWorker();
         private BackgroundWorker oscReceiver = new BackgroundWorker();
 
+        private readonly int CAMERA_DATA_PORT = 5801;
         private readonly int AUTO_DATA_PORT = 5805;
         private readonly int JOYSTICK_DATA_PORT = 5806;
         private readonly string ROBOT_IP = "10.1.95.2";
         //private readonly string ROBOT_IP = "10.0.2.91";
         private bool runThread = true;
 
-        private DrawingImageProvider _bitmapSourceProvider;
-        private MediaConnector _connector;
-        private MJPEGConnection _mjpegConnection;
-
-        private static readonly string CAMERA_STR = "http://10.1.95.11/axis-cgi/mjpg/video.cgi?fps=20&compression=85&resolution=640x480";
-        private static readonly string CAMERA_USERNAME = "FRC";
-        private static readonly string CAMERA_PASSWORD = "FRC";
         private List<FRCJoystick> joysticks = new List<FRCJoystick>();
         private object joystickLock = new object();
 
         private bool Enabled { get; set; } = false;
 
         private Thread joystickCaptureThread;
+        private Thread cameraCaptureThread;
 
         public MainWindow()
         {
@@ -68,10 +64,6 @@ namespace CyberDash
 
             oscReceiver.DoWork += oscReceiverWorker_DoWork;
             oscReceiver.RunWorkerCompleted += oscReceiverWorker_RunWorkerCompleted;
-
-            _connector = new MediaConnector();
-            _bitmapSourceProvider = new DrawingImageProvider();
-            cameraViewer.SetImageProvider(_bitmapSourceProvider);
 
             joystickCaptureThread = new Thread(() =>
             {
@@ -200,6 +192,25 @@ namespace CyberDash
 
             joystickCaptureThread.Start();
 
+            cameraCaptureThread = new Thread(() =>
+            {
+                UdpClient listener = new UdpClient(CAMERA_DATA_PORT);
+                IPEndPoint groupEP = new IPEndPoint(IPAddress.Any, CAMERA_DATA_PORT);
+                Dispatcher.Invoke(() => {
+                    imgViewer.Stretch = Stretch.Uniform;
+                    RenderOptions.SetBitmapScalingMode(imgViewer, BitmapScalingMode.LowQuality);
+                });
+                while (runThread)
+                {
+                    byte[] receive_byte_array = listener.Receive(ref groupEP);
+                    Dispatcher.Invoke(() => {
+                        imgViewer.Source = ToImage(receive_byte_array);
+                    });
+                }
+            });
+
+            cameraCaptureThread.Start();
+
             System.Windows.Threading.DispatcherTimer refreshViewTimer = new System.Windows.Threading.DispatcherTimer();
             refreshViewTimer.Tick += refreshViewTimer_Tick;
             refreshViewTimer.Interval = new TimeSpan(0, 0, 0, 0, 100);
@@ -209,6 +220,19 @@ namespace CyberDash
             refocusTimer.Tick += refocusTimer_Tick;
             refocusTimer.Interval = new TimeSpan(0, 0, 0, 0, 100);
             refocusTimer.Start();
+        }
+
+        public BitmapImage ToImage(byte[] array)
+        {
+            using (var ms = new System.IO.MemoryStream(array))
+            {
+                var image = new BitmapImage();
+                image.BeginInit();
+                image.CacheOption = BitmapCacheOption.OnLoad; // here
+                image.StreamSource = ms;
+                image.EndInit();
+                return image;
+            }
         }
 
         private long convertBoolArrToLong(bool[] arr)
@@ -354,25 +378,6 @@ namespace CyberDash
             lstJoystick.Items.Refresh();
         }
 
-        private void connectCamera()
-        {
-            if (_mjpegConnection != null)
-                _mjpegConnection.Disconnect();
-
-            var config = new OzConf_P_MJPEGClient(CAMERA_STR, CAMERA_USERNAME, CAMERA_PASSWORD);
-            _mjpegConnection = new MJPEGConnection(config);
-            //_mjpegConnection.Connect();
-            //_connector.Connect(_mjpegConnection.VideoChannel, _bitmapSourceProvider);
-            //cameraViewer.Start();
-        }
-
-        private void disconnectCamera()
-        {
-            if (_mjpegConnection == null) return;
-            _mjpegConnection.Disconnect();
-            cameraViewer.Stop();
-        }
-
         private void Window_Loaded(object sender, RoutedEventArgs e)
         {
             var sWidth = SystemParameters.VirtualScreenWidth;
@@ -382,15 +387,6 @@ namespace CyberDash
             Logic.Move();
             oscSender.RunWorkerAsync();
             oscReceiver.RunWorkerAsync();
-
-            try
-            {
-                connectCamera();
-            }
-            catch (Exception)
-            {
-
-            }
 
             this.Activate();
             this.Focus();
@@ -537,7 +533,7 @@ namespace CyberDash
         {
             try
             {
-                disconnectCamera();
+
             } catch (Exception)
             {
 
