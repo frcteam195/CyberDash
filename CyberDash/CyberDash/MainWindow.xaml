@@ -21,7 +21,6 @@
             <RowDefinition Height="*"/>
         </Grid.RowDefinitions>
         <Image x:Name="imgViewer" Grid.Row="0" Grid.Column="0" Height="480" Width="640" MinWidth="640" MaxWidth="640" MinHeight="480" MaxHeight="480"  />
-        <!--<MediaElement x:Name="cameraViewer" Grid.Row="0" Grid.Column="0" Width="640" MinWidth="640" MaxWidth="640" Height="480" MinHeight="480" MaxHeight="480" VerticalAlignment="Center"  HorizontalAlignment="Center"/>-->
         <Grid Grid.Column="1" Grid.Row="0">
             <TabControl HorizontalAlignment="Stretch" VerticalAlignment="Stretch">
                 <TabItem Header="Main Panel" HorizontalAlignment="Stretch" VerticalAlignment="Stretch">
@@ -48,8 +47,8 @@
                     </Grid>
                 </TabItem>
                 <TabItem Header="Motor Current" HorizontalAlignment="Stretch" VerticalAlignment="Stretch">
-                    <Grid Background="#2a2a2a" HorizontalAlignment="Stretch" VerticalAlignment="Stretch">
-                        <lvc:CartesianChart x:Name="motorCurrentChart" LegendLocation="Right" Foreground="White" />
+                    <Grid x:Name="chartContainerGrid" Background="#2a2a2a" HorizontalAlignment="Stretch" VerticalAlignment="Stretch">
+                        <lvc:CartesianChart x:Name="motorCurrentChart" LegendLocation="Right" Foreground="White" DisableAnimations="True" Hoverable="False" DataTooltip="{x:Null}" />
                     </Grid>
                 </TabItem>
                 <TabItem Header="JoystickSelection" HorizontalAlignment="Stretch" VerticalAlignment="Stretch">

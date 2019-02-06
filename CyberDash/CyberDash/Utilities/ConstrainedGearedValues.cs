@@ -22,5 +22,6 @@ namespace CyberDash.Utilities
             if (this.Count > maxSize)
                 base.RemoveAt(0);
         }
+
     }
 }

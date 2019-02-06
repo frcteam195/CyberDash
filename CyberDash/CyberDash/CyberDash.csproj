@@ -92,6 +92,7 @@
     <Compile Include="SharperOSC\UDPSender.cs" />
     <Compile Include="SharperOSC\Utils.cs" />
     <Compile Include="Utilities\ConstrainedGearedValues.cs" />
+    <Compile Include="Utilities\CyberDataItem.cs" />
     <Compile Include="Utilities\FRCJoystick.cs" />
     <Compile Include="Utilities\MovingAverage.cs" />
     <Compile Include="Utilities\ThreadRateControl.cs" />
@@ -147,6 +148,5 @@
       <Name>PanelControls</Name>
     </ProjectReference>
   </ItemGroup>
-  <ItemGroup />
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
 </Project>

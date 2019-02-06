@@ -40,6 +40,8 @@ namespace CyberDash
         private BackgroundWorker oscSender = new BackgroundWorker();
         private BackgroundWorker oscReceiver = new BackgroundWorker();
 
+        public static readonly bool EMAIL_LOG_ENABLED = true;
+
         private readonly int CAMERA_DATA_PORT = 5801;
         private readonly int AUTO_DATA_PORT = 5805;
         private readonly int JOYSTICK_DATA_PORT = 5806;
@@ -56,6 +58,7 @@ namespace CyberDash
         private Thread cameraCaptureThread;
 
         private SeriesCollection motorCurrentList = new SeriesCollection();
+        private object dataParserLock = new object();
 
         public MainWindow()
         {
@@ -200,14 +203,16 @@ namespace CyberDash
             {
                 UdpClient listener = new UdpClient(CAMERA_DATA_PORT);
                 IPEndPoint groupEP = new IPEndPoint(IPAddress.Any, CAMERA_DATA_PORT);
-                Dispatcher.Invoke(() => {
+                Dispatcher.Invoke(() =>
+                {
                     imgViewer.Stretch = Stretch.Uniform;
                     RenderOptions.SetBitmapScalingMode(imgViewer, BitmapScalingMode.LowQuality);
                 });
                 while (runThread)
                 {
                     byte[] receive_byte_array = listener.Receive(ref groupEP);
-                    Dispatcher.Invoke(() => {
+                    Dispatcher.Invoke(() =>
+                    {
                         imgViewer.Source = ToImage(receive_byte_array);
                     });
                 }
@@ -238,6 +243,11 @@ namespace CyberDash
             refocusTimer.Tick += refocusTimer_Tick;
             refocusTimer.Interval = new TimeSpan(0, 0, 0, 0, 100);
             refocusTimer.Start();
+
+            System.Windows.Threading.DispatcherTimer uiUpdateChartTimer = new System.Windows.Threading.DispatcherTimer();
+            uiUpdateChartTimer.Tick += uiUpdateChart_Tick;
+            uiUpdateChartTimer.Interval = new TimeSpan(0, 0, 0, 0, 200);
+            uiUpdateChartTimer.Start();
         }
 
         public BitmapImage ToImage(byte[] array)
@@ -279,6 +289,11 @@ namespace CyberDash
                 this.Activate();
                 this.Focus();
             }
+        }
+
+        private void uiUpdateChart_Tick(object sender, EventArgs e)
+        {
+
         }
 
         private void enumerateJoysticks()
@@ -452,7 +467,7 @@ namespace CyberDash
             OscMessage messageReceived = null;
             bool prevEnabled = false;
             CKLogHandler ckLogger = null;
-
+            Dispatcher.Invoke(() => motorCurrentChart.Series = motorCurrentList);
             while (runThread)
             {
                 messageReceived = (OscMessage)udpListener.Receive();
@@ -463,65 +478,78 @@ namespace CyberDash
                         case "/LogData":
                             try
                             {
-                                List<string> stringList = messageReceived.Arguments.Select(s => s.ToString()).ToList();
-                                try
+                                List<CyberDataItem> dataList = new List<CyberDataItem>();
+                                Parallel.ForEach(messageReceived.Arguments, (a) =>
                                 {
-                                    string hasCubeString = stringList.First(s => s.ToLower().Contains("hascube")).ToString();
-                                    bool hasCube = hasCubeString.Split(':')[1].Split(';')[0].ToLower().Equals("true");
-                                    Dispatcher.Invoke(() => ledHasCube.IsActive = hasCube);
-
-                                    string hasArmFaultString = stringList.First(s => s.ToLower().Contains("armfault")).ToString();
-                                    bool hasArmFault = hasArmFaultString.Split(':')[1].Split(';')[0].ToLower().Equals("true");
-                                    Dispatcher.Invoke(() => ledArmFault.IsActive = hasArmFault);
-
-                                    string hasElevatorFaultString = stringList.First(s => s.ToLower().Contains("elevatorfault")).ToString();
-                                    bool hasElevatorFault = hasElevatorFaultString.Split(':')[1].Split(';')[0].ToLower().Equals("true");
-                                    Dispatcher.Invoke(() => ledElevatorFault.IsActive = hasElevatorFault);
-
-                                    string hasClimberFaultString = stringList.First(s => s.ToLower().Contains("climberfault")).ToString();
-                                    bool hasClimberFault = hasClimberFaultString.Split(':')[1].Split(';')[0].ToLower().Equals("true");
-                                    Dispatcher.Invoke(() => ledClimberFault.IsActive = hasClimberFault);
-                                }
-                                catch (Exception ex)
-                                {
-
-                                }
-
-                                try
-                                {
-                                    List<string> motorCurrentPacketList = stringList.FindAll(s => s.ToLower().Contains("current"));
-                                    if (motorCurrentPacketList.Count != motorCurrentList.Count)
-                                    {
-                                        motorCurrentList.Clear();
-                                        motorCurrentPacketList.ForEach((s) =>
-                                        {
-                                            GLineSeries g = new GLineSeries
-                                            {
-                                                Title = s.Split(':')[0],
-                                                Values = new ConstrainedGearedValues<double>(50),
-                                                PointGeometry = null,
-                                            };
-                                            motorCurrentList.Add(g);
-                                        });
-                                        Dispatcher.Invoke(() => {
-                                            motorCurrentChart.Series = null;
-                                            motorCurrentChart.Series = motorCurrentList;
-                                        });
+                                    lock (dataParserLock) {
+                                        dataList.Add(new CyberDataItem(a.ToString()));
                                     }
+                                });
+                                dataList.Sort();
 
-                                    for (int i = 0; i < motorCurrentPacketList.Count; i++)
-                                    {
-                                        double val = Double.Parse(motorCurrentPacketList[i].Split(':')[1].Split(';')[0]);
-                                        motorCurrentList[i].Values.Add(val);
-                                    }
-                                }
-                                catch (Exception ex)
-                                {
+                                //try
+                                //{
+                                //    string hasCubeString = stringList.First(s => s.ToLower().Contains("hascube")).ToString();
+                                //    bool hasCube = hasCubeString.Split(':')[1].Split(';')[0].ToLower().Equals("true");
+                                //    Dispatcher.Invoke(() => ledHasCube.IsActive = hasCube);
 
-                                }
+                                //    string hasArmFaultString = stringList.First(s => s.ToLower().Contains("armfault")).ToString();
+                                //    bool hasArmFault = hasArmFaultString.Split(':')[1].Split(';')[0].ToLower().Equals("true");
+                                //    Dispatcher.Invoke(() => ledArmFault.IsActive = hasArmFault);
 
-                                string hasEnabledString = stringList.First(s => s.ToLower().Contains("enabled")).ToString();
-                                Enabled = hasEnabledString.Split(':')[1].Split(';')[0].ToLower().Equals("true");
+                                //    string hasElevatorFaultString = stringList.First(s => s.ToLower().Contains("elevatorfault")).ToString();
+                                //    bool hasElevatorFault = hasElevatorFaultString.Split(':')[1].Split(';')[0].ToLower().Equals("true");
+                                //    Dispatcher.Invoke(() => ledElevatorFault.IsActive = hasElevatorFault);
+
+                                //    string hasClimberFaultString = stringList.First(s => s.ToLower().Contains("climberfault")).ToString();
+                                //    bool hasClimberFault = hasClimberFaultString.Split(':')[1].Split(';')[0].ToLower().Equals("true");
+                                //    Dispatcher.Invoke(() => ledClimberFault.IsActive = hasClimberFault);
+                                //}
+                                //catch (Exception ex)
+                                //{
+
+                                //}
+
+                                //try
+                                //{
+                                //    List<CyberDataItem> motorCurrentPacketList = dataList.FindAll(s => s.Key.ToLower().Contains("current"));
+
+
+                                //    if (motorCurrentPacketList.Count != motorCurrentList.Count)
+                                //    {
+                                //        Dispatcher.Invoke(() =>
+                                //        {
+                                //            motorCurrentList.Clear();
+                                //            motorCurrentPacketList.ForEach((s) =>
+                                //            {
+                                //                GLineSeries g = new GLineSeries
+                                //                {
+                                //                    Title = s.Key,
+                                //                    Values = new ConstrainedGearedValues<double>(10).WithQuality(Quality.Low),
+                                //                    PointGeometry = null,
+                                //                    DataLabels = false,
+                                //                    Fill = null,
+                                //                    AllowDrop = false,
+                                                    
+                                //                };
+                                //                motorCurrentList.Add(g);
+                                //            });
+                                //        });
+
+                                //    }
+
+                                //    for (int i = 0; i < motorCurrentPacketList.Count; i++)
+                                //    {
+                                //        double val = Double.Parse(motorCurrentPacketList[i].Value);
+                                //        ((ConstrainedGearedValues<double>)(motorCurrentList[i].Values)).Add(val);
+                                //    }
+                                //}
+                                //catch (Exception ex)
+                                //{
+                                //    Console.WriteLine(ex.ToString());
+                                //}
+
+                                Enabled = dataList.First(s => s.Key.ToLower().Contains("enabled")).Value.ToLower().Equals("true");
 
                                 if (prevEnabled != Enabled && Enabled)
                                 {
@@ -540,13 +568,14 @@ namespace CyberDash
                                         List<string> logDataList;
                                         if (!ckLogger.HeadersWritten)
                                         {
-                                            logDataList = stringList.Select(s => s.Split(':')[0]).ToList();
+                                            logDataList = dataList.Select(s => s.Key).ToList();
                                             ckLogger.WriteCSVHeaders(logDataList);
                                         }
 
-                                        logDataList = stringList.Select(s => s.Split(':')[1].Split(';')[0]).ToList();
+                                        logDataList = dataList.Select(s => s.Value).ToList();
                                         ckLogger.LogData(logDataList);
-                                    } catch (Exception ex)
+                                    }
+                                    catch (Exception ex)
                                     {
 
                                     }
@@ -567,7 +596,7 @@ namespace CyberDash
                     }
                 }
 
-                Thread.Sleep(5);
+                Thread.Sleep(1);
             }
 
             udpListener.Close();
@@ -583,7 +612,8 @@ namespace CyberDash
             try
             {
 
-            } catch (Exception)
+            }
+            catch (Exception)
             {
 
             }
@@ -602,11 +632,6 @@ namespace CyberDash
         public static String GetTimestamp(DateTime value)
         {
             return value.ToString("yyyy-MM-dd-HH-mm-ss-ffff");
-        }
-
-        private void cmdCalibrate_Click(object sender, RoutedEventArgs e)
-        {
-
         }
 
         private void cmdRefresh_Click(object sender, RoutedEventArgs e)
