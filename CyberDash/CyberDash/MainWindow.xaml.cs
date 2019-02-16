@@ -29,6 +29,7 @@ using LiveCharts;
 using LiveCharts.Wpf;
 using LiveCharts.Geared;
 
+[assembly: System.Windows.Media.DisableDpiAwareness]
 namespace CyberDash
 {
     /// <summary>
@@ -211,7 +212,7 @@ namespace CyberDash
                 while (runThread)
                 {
                     byte[] receive_byte_array = listener.Receive(ref groupEP);
-                    Dispatcher.Invoke(() =>
+                    Dispatcher.InvokeAsync(() =>
                     {
                         imgViewer.Source = ToImage(receive_byte_array);
                     });
@@ -221,17 +222,17 @@ namespace CyberDash
             cameraCaptureThread.Start();
 
 
-            motorCurrentChart.AxisX.Add(new Axis
-            {
-                Title = "Sample",
-                MaxWidth = 100,
-            });
+            //motorCurrentChart.AxisX.Add(new Axis
+            //{
+            //    Title = "Sample",
+            //    MaxWidth = 100,
+            //});
 
-            motorCurrentChart.AxisY.Add(new Axis
-            {
-                Title = "Value",
-                MaxWidth = 100,
-            });
+            //motorCurrentChart.AxisY.Add(new Axis
+            //{
+            //    Title = "Value",
+            //    MaxWidth = 100,
+            //});
 
 
             System.Windows.Threading.DispatcherTimer refreshViewTimer = new System.Windows.Threading.DispatcherTimer();
@@ -442,8 +443,8 @@ namespace CyberDash
             {
                 int autoStartPositionIndex = -1;
                 int autoModeIndex = -1;
-                Dispatcher.Invoke(() => autoStartPositionIndex = cboAutoStartSelection.SelectedIndex);
-                Dispatcher.Invoke(() => autoStartPositionIndex = cboAutoMode.SelectedIndex);
+                //Dispatcher.Invoke(() => autoStartPositionIndex = cboAutoStartSelection.SelectedIndex);
+                //Dispatcher.Invoke(() => autoStartPositionIndex = cboAutoMode.SelectedIndex);
 
                 var message = new OscMessage("/AutoData",
                     (int)autoStartPositionIndex,
@@ -467,7 +468,7 @@ namespace CyberDash
             OscMessage messageReceived = null;
             bool prevEnabled = false;
             CKLogHandler ckLogger = null;
-            Dispatcher.Invoke(() => motorCurrentChart.Series = motorCurrentList);
+            //Dispatcher.Invoke(() => motorCurrentChart.Series = motorCurrentList);
             while (runThread)
             {
                 messageReceived = (OscMessage)udpListener.Receive();
@@ -487,28 +488,28 @@ namespace CyberDash
                                 });
                                 dataList.Sort();
 
-                                //try
-                                //{
-                                //    string hasCubeString = stringList.First(s => s.ToLower().Contains("hascube")).ToString();
-                                //    bool hasCube = hasCubeString.Split(':')[1].Split(';')[0].ToLower().Equals("true");
-                                //    Dispatcher.Invoke(() => ledHasCube.IsActive = hasCube);
+                                try
+                                {
+                                    CyberDataItem hasGamePieceItem = dataList.First(s => s.Key.ToLower().Contains("hasgamepiece"));
+                                    bool hasGamePiece = hasGamePieceItem.Value.ToLower().Equals("true");
+                                    //Dispatcher.InvokeAsync(() => ledHasGamePiece.IsActive = hasGamePiece);
 
-                                //    string hasArmFaultString = stringList.First(s => s.ToLower().Contains("armfault")).ToString();
-                                //    bool hasArmFault = hasArmFaultString.Split(':')[1].Split(';')[0].ToLower().Equals("true");
-                                //    Dispatcher.Invoke(() => ledArmFault.IsActive = hasArmFault);
+                                    CyberDataItem hasTurretFaultString = dataList.First(s => s.Key.ToLower().Contains("turretfault"));
+                                    bool hasTurretFault = hasTurretFaultString.Value.ToLower().Equals("true");
+                                    Dispatcher.InvokeAsync(() => ledTurretFault.IsActive = hasTurretFault);
 
-                                //    string hasElevatorFaultString = stringList.First(s => s.ToLower().Contains("elevatorfault")).ToString();
-                                //    bool hasElevatorFault = hasElevatorFaultString.Split(':')[1].Split(';')[0].ToLower().Equals("true");
-                                //    Dispatcher.Invoke(() => ledElevatorFault.IsActive = hasElevatorFault);
+                                    CyberDataItem hasElevatorFaultString = dataList.First(s => s.Key.ToLower().Contains("elevatorfault"));
+                                    bool hasElevatorFault = hasElevatorFaultString.Value.ToLower().Equals("true");
+                                    Dispatcher.InvokeAsync(() => ledElevatorFault.IsActive = hasElevatorFault);
 
-                                //    string hasClimberFaultString = stringList.First(s => s.ToLower().Contains("climberfault")).ToString();
-                                //    bool hasClimberFault = hasClimberFaultString.Split(':')[1].Split(';')[0].ToLower().Equals("true");
-                                //    Dispatcher.Invoke(() => ledClimberFault.IsActive = hasClimberFault);
-                                //}
-                                //catch (Exception ex)
-                                //{
+                                    CyberDataItem hasClimberFaultString = dataList.First(s => s.Key.ToLower().Contains("climberfault"));
+                                    bool hasClimberFault = hasClimberFaultString.Value.ToLower().Equals("true");
+                                    Dispatcher.InvokeAsync(() => ledClimberFault.IsActive = hasClimberFault);
+                                }
+                                catch (Exception ex)
+                                {
 
-                                //}
+                                }
 
                                 //try
                                 //{
@@ -517,7 +518,7 @@ namespace CyberDash
 
                                 //    if (motorCurrentPacketList.Count != motorCurrentList.Count)
                                 //    {
-                                //        Dispatcher.Invoke(() =>
+                                //        Dispatcher.InvokeAsync(() =>
                                 //        {
                                 //            motorCurrentList.Clear();
                                 //            motorCurrentPacketList.ForEach((s) =>
@@ -530,7 +531,7 @@ namespace CyberDash
                                 //                    DataLabels = false,
                                 //                    Fill = null,
                                 //                    AllowDrop = false,
-                                                    
+
                                 //                };
                                 //                motorCurrentList.Add(g);
                                 //            });
