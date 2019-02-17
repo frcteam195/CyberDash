@@ -413,11 +413,20 @@ namespace CyberDash
 
         private void Window_Loaded(object sender, RoutedEventArgs e)
         {
-            var sWidth = SystemParameters.VirtualScreenWidth;
-            var sHeight = SystemParameters.VirtualScreenHeight;
-            this.MaxHeight = this.MinHeight = this.Height = sHeight - DRIVER_STATION_HEIGHT;
-            this.MaxWidth = this.MinWidth = this.Width = sWidth;
-            Logic.Move();
+            //var sWidth = SystemParameters.VirtualScreenWidth;
+            //var sHeight = SystemParameters.VirtualScreenHeight;
+            //this.MaxHeight = this.MinHeight = this.Height = sHeight - DRIVER_STATION_HEIGHT;
+            //this.MaxWidth = this.MinWidth = this.Width = sWidth;
+            //Logic.Move();
+
+            // Resze the dashboard based on the screen resolution.
+            CyberDashMainWindow.Width = SystemParameters.PrimaryScreenWidth;
+            CyberDashMainWindow.Height = SystemParameters.PrimaryScreenHeight * 0.777777;
+
+            // Set the dashboard into the top of the screen.
+            CyberDashMainWindow.Left = 0;
+            CyberDashMainWindow.Top = 0;
+
             oscSender.RunWorkerAsync();
             oscReceiver.RunWorkerAsync();
 

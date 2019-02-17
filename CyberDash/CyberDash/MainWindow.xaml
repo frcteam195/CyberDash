@@ -11,7 +11,7 @@
         Background="#2a2a2a"
         Closing="Window_Closing"
         Topmost="False"
-        Title="MainWindow" Height="808" Width="1920" MaxHeight="808" MaxWidth="1920" WindowStyle="None" ResizeMode="NoResize" ScrollViewer.VerticalScrollBarVisibility="Disabled" SnapsToDevicePixels="True" WindowState="Maximized">
+        Title="MainWindow" Height="808" Width="1920" WindowStyle="None" ResizeMode="NoResize" WindowStartupLocation="Manual" x:Name="CyberDashMainWindow" SnapsToDevicePixels="True">
     <Grid HorizontalAlignment="Stretch" Margin="0,0,0,0" VerticalAlignment="Stretch">
         <Grid.ColumnDefinitions>
             <ColumnDefinition Width="Auto" />
