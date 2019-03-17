@@ -7,6 +7,7 @@
         xmlns:panelControls="clr-namespace:PanelControls;assembly=PanelControls"
         xmlns:lvc="clr-namespace:LiveCharts.Wpf;assembly=LiveCharts.Wpf"
         mc:Ignorable="d"
+        Icon="CyberLogo2.ico"
         Loaded="Window_Loaded"
         Background="#2a2a2a"
         Closing="Window_Closing"
