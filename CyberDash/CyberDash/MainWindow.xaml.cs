@@ -29,9 +29,6 @@ using MjpegProcessor;
 //[assembly: System.Windows.Media.DisableDpiAwareness]
 namespace CyberDash
 {
-    /// <summary>
-    /// Interaction logic for MainWindow.xaml
-    /// </summary>
     public partial class MainWindow : Window
     {
         private BackgroundWorker oscSender = new BackgroundWorker();
@@ -49,9 +46,26 @@ namespace CyberDash
 
         private object dataParserLock = new object();
 
+        private static readonly Uri LimelightFrontAddr = new Uri("http://10.1.95.11:5800");
+        private static readonly Uri LimelightBackAddr = new Uri("http://10.1.95.12:5800");
+
+        private bool camera1Error = false;
+        private bool camera2Error = false;
+
+        private MjpegDecoder mjpegParser1 = new MjpegDecoder();
+        private MjpegDecoder mjpegParser2 = new MjpegDecoder();
+
         public MainWindow()
         {
             InitializeComponent();
+
+            mjpegParser1.FrameReady += mjpeg1_FrameReady;
+            mjpegParser1.Error += mjpeg1_Error;
+            mjpegParser1.ParseStream(LimelightFrontAddr);
+
+            mjpegParser2.FrameReady += mjpeg2_FrameReady;
+            mjpegParser2.Error += mjpeg2_Error;
+            mjpegParser2.ParseStream(LimelightBackAddr);
 
             img1Viewer.Stretch = Stretch.Uniform;
             RenderOptions.SetBitmapScalingMode(img1Viewer, BitmapScalingMode.LowQuality);
@@ -73,7 +87,6 @@ namespace CyberDash
             refocusTimer.Tick += refocusTimer_Tick;
             refocusTimer.Interval = new TimeSpan(0, 0, 0, 0, 100);
             refocusTimer.Start();
-
         }
 
         private void refocusTimer_Tick(object sender, EventArgs e)
@@ -93,7 +106,15 @@ namespace CyberDash
             {
                 while (runThread)
                 {
+                    try
+                    {
+                        CheckStream();
+                        Thread.Sleep(100);
+                    }
+                    catch (Exception)
+                    {
 
+                    }
                 }
             });
 
@@ -104,6 +125,42 @@ namespace CyberDash
 
             this.Activate();
             this.Focus();
+        }
+
+        public void CheckStream()
+        {
+            if (camera1Error)
+            {
+                mjpegParser1.ParseStream(LimelightFrontAddr);
+                camera1Error = false;
+            }
+            if (camera2Error)
+            {
+                mjpegParser2.ParseStream(LimelightBackAddr);
+                camera2Error = false;
+            }
+        }
+
+        private void mjpeg1_FrameReady(object sender, FrameReadyEventArgs e)
+        {
+            img1Viewer.Source = e.BitmapImage;
+        }
+
+        void mjpeg1_Error(object sender, ErrorEventArgs e)
+        {
+            mjpegParser1.StopStream();
+            camera1Error = true;
+        }
+
+        private void mjpeg2_FrameReady(object sender, FrameReadyEventArgs e)
+        {
+            img2Viewer.Source = e.BitmapImage;
+        }
+
+        void mjpeg2_Error(object sender, ErrorEventArgs e)
+        {
+            mjpegParser2.StopStream();
+            camera2Error = true;
         }
 
         private void oscSenderWorker_DoWork(object sender, DoWorkEventArgs e)
