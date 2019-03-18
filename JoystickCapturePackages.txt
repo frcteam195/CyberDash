@@ -1,0 +1,3 @@
+SharpDX
+SharpDX.DirectInput
+SharpDX.XInput

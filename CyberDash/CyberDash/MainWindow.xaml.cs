@@ -19,18 +19,14 @@ using System.Windows.Navigation;
 using System.Windows.Shapes;
 
 using SharperOSC;
-using SharpDX.DirectInput;
-using SharpDX.XInput;
 using CyberDash.Utilities;
 using System.Management;
 using System.Net.Sockets;
 using System.Net;
 
-using LiveCharts;
-using LiveCharts.Wpf;
-using LiveCharts.Geared;
+using MjpegProcessor;
 
-[assembly: System.Windows.Media.DisableDpiAwareness]
+//[assembly: System.Windows.Media.DisableDpiAwareness]
 namespace CyberDash
 {
     /// <summary>
@@ -38,35 +34,29 @@ namespace CyberDash
     /// </summary>
     public partial class MainWindow : Window
     {
-        public static readonly double DRIVER_STATION_HEIGHT = 240;
         private BackgroundWorker oscSender = new BackgroundWorker();
         private BackgroundWorker oscReceiver = new BackgroundWorker();
 
         public static readonly bool EMAIL_LOG_ENABLED = true;
 
-        private readonly int CAMERA_DATA_PORT = 5801;
         private readonly int AUTO_DATA_PORT = 5805;
-        private readonly int JOYSTICK_DATA_PORT = 5806;
         private readonly string ROBOT_IP = "10.1.95.2";
-        //private readonly string ROBOT_IP = "10.0.2.91";
         private bool runThread = true;
-
-        private List<FRCJoystick> joysticks = new List<FRCJoystick>();
-        private object joystickLock = new object();
 
         private bool Enabled { get; set; } = false;
 
-        private Thread joystickCaptureThread;
-        private Thread cameraCaptureThread;
+        private Thread cameraErrorCheckThread;
 
-        private SeriesCollection motorCurrentList = new SeriesCollection();
         private object dataParserLock = new object();
 
         public MainWindow()
         {
             InitializeComponent();
 
-            //enumerateJoysticks();
+            img1Viewer.Stretch = Stretch.Uniform;
+            RenderOptions.SetBitmapScalingMode(img1Viewer, BitmapScalingMode.LowQuality);
+            img2Viewer.Stretch = Stretch.Uniform;
+            RenderOptions.SetBitmapScalingMode(img2Viewer, BitmapScalingMode.LowQuality);
 
             oscSender.DoWork += oscSenderWorker_DoWork;
             oscSender.RunWorkerCompleted += oscSenderWorker_RunWorkerCompleted;
@@ -74,193 +64,16 @@ namespace CyberDash
             oscReceiver.DoWork += oscReceiverWorker_DoWork;
             oscReceiver.RunWorkerCompleted += oscReceiverWorker_RunWorkerCompleted;
 
-            //joystickCaptureThread = new Thread(() =>
-            //{
-            //    UDPSender udpSender = null;
-            //    try
-            //    {
-            //        udpSender = new UDPSender(ROBOT_IP, JOYSTICK_DATA_PORT);
-            //    }
-            //    catch (Exception)
-            //    {
-            //        MessageBox.Show("Error creating UDP Sender. Make sure your IP Address and port settings are correct!", "Dashboard", MessageBoxButton.OK, MessageBoxImage.Error);
-            //        Environment.Exit(1);
-            //    }
-            //    ThreadRateControl trc = new ThreadRateControl();
-
-            //    List<OscMessage> messageList = new List<OscMessage>();
-            //    object lockObject = new object();
-            //    trc.Start();
-            //    while (runThread)
-            //    {
-            //        messageList.Clear();
-            //        lock (joystickLock)
-            //        {
-            //            Parallel.ForEach(joysticks, (j) =>
-            //            {
-            //                try
-            //                {
-            //                    List<object> lO = new List<object>();
-            //                    if (j != null)
-            //                    {
-            //                        if (j.xJoystick != null)
-            //                        {
-            //                            Gamepad gamepad = j.xJoystick.GetState().Gamepad;
-            //                            lO.Add((int)gamepad.LeftThumbX);
-            //                            lO.Add((int)gamepad.LeftThumbY);
-            //                            lO.Add((int)(gamepad.LeftTrigger * 128.5));
-            //                            lO.Add((int)(gamepad.RightTrigger * 128.5));
-            //                            lO.Add((int)gamepad.RightThumbX);
-            //                            lO.Add((int)gamepad.RightThumbY);
-
-            //                            bool[] buttonArr = new bool[10];
-            //                            buttonArr[0] = gamepad.Buttons.HasFlag(GamepadButtonFlags.A);
-            //                            buttonArr[1] = gamepad.Buttons.HasFlag(GamepadButtonFlags.B);
-            //                            buttonArr[2] = gamepad.Buttons.HasFlag(GamepadButtonFlags.X);
-            //                            buttonArr[3] = gamepad.Buttons.HasFlag(GamepadButtonFlags.Y);
-            //                            buttonArr[4] = gamepad.Buttons.HasFlag(GamepadButtonFlags.LeftShoulder);
-            //                            buttonArr[5] = gamepad.Buttons.HasFlag(GamepadButtonFlags.RightShoulder);
-            //                            buttonArr[6] = gamepad.Buttons.HasFlag(GamepadButtonFlags.Start);
-            //                            buttonArr[7] = gamepad.Buttons.HasFlag(GamepadButtonFlags.Back);
-            //                            buttonArr[8] = gamepad.Buttons.HasFlag(GamepadButtonFlags.LeftThumb);
-            //                            buttonArr[9] = gamepad.Buttons.HasFlag(GamepadButtonFlags.RightThumb);
-            //                            lO.Add(convertBoolArrToLong(buttonArr));
-
-            //                            gamepad.Buttons.HasFlag(GamepadButtonFlags.DPadUp);
-            //                            gamepad.Buttons.HasFlag(GamepadButtonFlags.DPadRight);
-            //                            gamepad.Buttons.HasFlag(GamepadButtonFlags.DPadDown);
-            //                            gamepad.Buttons.HasFlag(GamepadButtonFlags.DPadLeft);
-
-            //                            int pov = -1;
-            //                            switch ((ushort)gamepad.Buttons)
-            //                            {
-            //                                case 1:
-            //                                    pov = 0;
-            //                                    break;
-            //                                case 9:
-            //                                    pov = 45;
-            //                                    break;
-            //                                case 8:
-            //                                    pov = 90;
-            //                                    break;
-            //                                case 10:
-            //                                    pov = 135;
-            //                                    break;
-            //                                case 2:
-            //                                    pov = 180;
-            //                                    break;
-            //                                case 6:
-            //                                    pov = 225;
-            //                                    break;
-            //                                case 4:
-            //                                    pov = 270;
-            //                                    break;
-            //                                case 5:
-            //                                    pov = 315;
-            //                                    break;
-            //                                default:
-            //                                    pov = -1;
-            //                                    break;
-            //                            }
-            //                            lO.Add(pov * 100);
-            //                            lO.Add((long)DateTime.UtcNow.ToUniversalTime().Subtract(new DateTime(1970, 1, 1, 0, 0, 0, DateTimeKind.Utc)).TotalMilliseconds);
-            //                        }
-            //                        else
-            //                        {
-            //                            JoystickState js = j.dJoystick.GetCurrentState();
-            //                            lO.Add(js.X - 32768);
-            //                            lO.Add(js.Y - 32768);
-            //                            lO.Add(js.Z - 32768);
-            //                            lO.Add(js.RotationX - 32768);
-            //                            lO.Add(js.RotationY - 32768);
-            //                            lO.Add(js.RotationZ - 32768);
-            //                            lO.Add(convertBoolArrToLong(js.Buttons));
-            //                            lO.Add(js.PointOfViewControllers[0]);
-            //                            lO.Add((long)DateTime.UtcNow.ToUniversalTime().Subtract(new DateTime(1970, 1, 1, 0, 0, 0, DateTimeKind.Utc)).TotalMilliseconds);
-            //                        }
-            //                        lock (lockObject)
-            //                        {
-            //                            messageList.Add(new OscMessage("/Joysticks/" + j.Index, lO.ToArray()));
-            //                        }
-            //                    }
-            //                }
-            //                catch (Exception ex)
-            //                {
-            //                    Console.WriteLine(ex.ToString());
-            //                    //TODO: Invoke joystick refresh
-            //                }
-            //            });
-            //        }
-            //        OscBundle messageBundle = new OscBundle((ulong)1, messageList.ToArray());
-            //        udpSender.Send(messageBundle);
-
-            //        trc.DoRateControl(10);
-            //    }
-            //    udpSender.Close();
-            //});
-
-            //joystickCaptureThread.Start();
-
-
-            //motorCurrentChart.AxisX.Add(new Axis
-            //{
-            //    Title = "Sample",
-            //    MaxWidth = 100,
-            //});
-
-            //motorCurrentChart.AxisY.Add(new Axis
-            //{
-            //    Title = "Value",
-            //    MaxWidth = 100,
-            //});
-
-
-            System.Windows.Threading.DispatcherTimer refreshViewTimer = new System.Windows.Threading.DispatcherTimer();
-            refreshViewTimer.Tick += refreshViewTimer_Tick;
-            refreshViewTimer.Interval = new TimeSpan(0, 0, 0, 0, 100);
-            //refreshViewTimer.Start();
+            CyberDashMainWindow.Width = SystemParameters.PrimaryScreenWidth;
+            CyberDashMainWindow.Height = SystemParameters.PrimaryScreenHeight * 0.772;
+            CyberDashMainWindow.Left = 0;
+            CyberDashMainWindow.Top = 0;
 
             System.Windows.Threading.DispatcherTimer refocusTimer = new System.Windows.Threading.DispatcherTimer();
             refocusTimer.Tick += refocusTimer_Tick;
             refocusTimer.Interval = new TimeSpan(0, 0, 0, 0, 100);
             refocusTimer.Start();
 
-            System.Windows.Threading.DispatcherTimer uiUpdateChartTimer = new System.Windows.Threading.DispatcherTimer();
-            uiUpdateChartTimer.Tick += uiUpdateChart_Tick;
-            uiUpdateChartTimer.Interval = new TimeSpan(0, 0, 0, 0, 200);
-            //uiUpdateChartTimer.Start();
-        }
-
-        public BitmapImage ToImage(byte[] array)
-        {
-            using (var ms = new System.IO.MemoryStream(array))
-            {
-                var image = new BitmapImage();
-                image.BeginInit();
-                image.CacheOption = BitmapCacheOption.OnLoad; // here
-                image.StreamSource = ms;
-                image.EndInit();
-                return image;
-            }
-        }
-
-        private long convertBoolArrToLong(bool[] arr)
-        {
-            int maxSize = arr.Length > 64 ? 64 : arr.Length;
-            long val = 0;
-            for (int i = 0; i < maxSize; i++)
-            {
-                val |= arr[i] ? (long)(1 << i) : 0;
-            }
-            return val;
-        }
-
-        private void refreshViewTimer_Tick(object sender, EventArgs e)
-        {
-            if (!Enabled)
-            {
-                lstJoystick.Items.Refresh();
-            }
         }
 
         private void refocusTimer_Tick(object sender, EventArgs e)
@@ -272,159 +85,19 @@ namespace CyberDash
             }
         }
 
-        private void uiUpdateChart_Tick(object sender, EventArgs e)
-        {
-
-        }
-
-        private void enumerateJoysticks()
-        {
-            DirectInput directInput = new DirectInput();
-            List<FRCJoystick> prevJoysticks = new List<FRCJoystick>(joysticks);
-            List<string> deviceIds = GetXInputCapableDevices();
-            lock (joystickLock)
-            {
-                joysticks.Clear();
-                foreach (DeviceInstance deviceInstance in directInput.GetDevices(SharpDX.DirectInput.DeviceType.Gamepad, DeviceEnumerationFlags.AllDevices))
-                {
-                    ulong Data1 = BitConverter.ToUInt32(deviceInstance.ProductGuid.ToByteArray(), 0);
-                    if (!deviceIds.Exists(x => x.Contains(Data1.ToString("X"))))
-                    {
-                        if (prevJoysticks.Exists(x => x.dJoystick.Information.InstanceGuid == deviceInstance.InstanceGuid))
-                        {
-                            joysticks.Add(prevJoysticks.Find(x => x.dJoystick.Information.InstanceGuid == deviceInstance.InstanceGuid));
-                        }
-                        else
-                        {
-                            joysticks.Add(new FRCJoystick(new Joystick(directInput, deviceInstance.InstanceGuid)));
-                        }
-                    }
-                }
-
-                foreach (DeviceInstance deviceInstance in directInput.GetDevices(SharpDX.DirectInput.DeviceType.Joystick, DeviceEnumerationFlags.AllDevices))
-                {
-                    ulong Data1 = BitConverter.ToUInt32(deviceInstance.ProductGuid.ToByteArray(), 0);
-                    if (!deviceIds.Exists(x => x.Contains(Data1.ToString("X"))))
-                    {
-                        if (prevJoysticks.Exists(x => x.dJoystick.Information.InstanceGuid == deviceInstance.InstanceGuid))
-                        {
-                            joysticks.Add(prevJoysticks.Find(x => x.dJoystick.Information.InstanceGuid == deviceInstance.InstanceGuid));
-                        }
-                        else
-                        {
-                            joysticks.Add(new FRCJoystick(new Joystick(directInput, deviceInstance.InstanceGuid)));
-                        }
-                    }
-                }
-            }
-
-            Controller[] controllers = new[] { new Controller(UserIndex.One), new Controller(UserIndex.Two), new Controller(UserIndex.Three), new Controller(UserIndex.Four) };
-            foreach (Controller c in controllers)
-            {
-                if (c.IsConnected)
-                {
-                    joysticks.Add(new FRCJoystick(c));
-                }
-            }
-
-            lstJoystick.ItemsSource = joysticks;
-            updateJoystickIndeces();
-        }
-
-        private List<string> GetXInputCapableDevices()
-        {
-            List<string> deviceIds = new List<string>();
-
-            try
-            {
-                ManagementObjectSearcher searcher = new ManagementObjectSearcher("root\\cimv2", "SELECT * FROM Win32_PnPEntity");
-                foreach (ManagementObject queryObj in searcher.Get())
-                {
-
-                    if (queryObj["DeviceID"] != null)
-                    {
-                        string pGuid = "";
-                        string s = queryObj["DeviceID"].ToString();
-                        if (s.Contains("IG_"))
-                        {
-                            string[] sArr = s.Split(new string[] { "\\", "&", "_" }, StringSplitOptions.RemoveEmptyEntries);
-                            if (sArr.Length >= 4)
-                            {
-                                pGuid = sArr[4].TrimStart(new Char[] { '0' }) + sArr[2];
-                            }
-                        }
-                        else
-                            continue;
-                        deviceIds.Add(pGuid);
-                    }
-                }
-            }
-            catch (ManagementException e)
-            {
-                Console.WriteLine("An error occurred while querying for WMI data: " + e.Message);
-            }
-            return deviceIds;
-        }
-
-        private void moveJoystick(bool up)
-        {
-            if (lstJoystick.SelectedIndex >= 0)
-            {
-                FRCJoystick f = (FRCJoystick)lstJoystick.SelectedItem;
-                int pIdx = lstJoystick.SelectedIndex;
-                lock (joystickLock)
-                {
-                    joysticks.RemoveAt(up ? pIdx-- : pIdx++);
-                    pIdx = pIdx < 0 ? 0 : pIdx;
-                    pIdx = pIdx >= joysticks.Count ? joysticks.Count : pIdx;
-                    joysticks.Insert(pIdx, f);
-                }
-            }
-            updateJoystickIndeces();
-        }
-
-        private void updateJoystickIndeces()
-        {
-            foreach (FRCJoystick f in lstJoystick.Items)
-            {
-                f.Index = lstJoystick.Items.IndexOf(f);
-            }
-            lstJoystick.Items.Refresh();
-        }
 
         private void Window_Loaded(object sender, RoutedEventArgs e)
         {
-            var sWidth = SystemParameters.VirtualScreenWidth;
-            var sHeight = SystemParameters.VirtualScreenHeight;
-            this.MaxHeight = this.MinHeight = this.Height = sHeight - DRIVER_STATION_HEIGHT;
-            this.MaxWidth = this.MinWidth = this.Width = sWidth;
-            Logic.Move();
 
-            while (!PingHost(ROBOT_IP, 4)) {
-                Dispatcher.Invoke(() => Console.WriteLine("Waiting for robot ping"));
-                Thread.Sleep(1000);
-            }
-
-            cameraCaptureThread = new Thread(() =>
+            cameraErrorCheckThread = new Thread(() =>
             {
-                UdpClient listener = new UdpClient(CAMERA_DATA_PORT);
-                IPEndPoint groupEP = new IPEndPoint(IPAddress.Any, CAMERA_DATA_PORT);
-                Dispatcher.Invoke(() =>
-                {
-                    imgViewer.Stretch = Stretch.Uniform;
-                    RenderOptions.SetBitmapScalingMode(imgViewer, BitmapScalingMode.LowQuality);
-                });
                 while (runThread)
                 {
-                    byte[] receive_byte_array = listener.Receive(ref groupEP);
-                    Dispatcher.InvokeAsync(() =>
-                    {
-                        imgViewer.Source = ToImage(receive_byte_array);
-                    });
+
                 }
             });
 
-            cameraCaptureThread.Start();
+            cameraErrorCheckThread.Start();
 
             oscSender.RunWorkerAsync();
             oscReceiver.RunWorkerAsync();
@@ -436,29 +109,50 @@ namespace CyberDash
         private void oscSenderWorker_DoWork(object sender, DoWorkEventArgs e)
         {
             UDPSender udpSender = null;
-            try
-            {
-                udpSender = new UDPSender(ROBOT_IP, AUTO_DATA_PORT);
-            }
-            catch (Exception)
-            {
-                MessageBox.Show("Error creating UDP Sender. Make sure your IP Address and port settings are correct!", "Dashboard", MessageBoxButton.OK, MessageBoxImage.Error);
-                Environment.Exit(1);
-            }
+            bool reinit = true;
 
             while (runThread)
             {
-                int autoStartPositionIndex = -1;
-                int autoModeIndex = -1;
-                //Dispatcher.Invoke(() => autoStartPositionIndex = cboAutoStartSelection.SelectedIndex);
-                //Dispatcher.Invoke(() => autoStartPositionIndex = cboAutoMode.SelectedIndex);
+                try
+                {
+                    if (udpSender == null || reinit)
+                    {
+                        try
+                        {
+                            udpSender = new UDPSender(ROBOT_IP, AUTO_DATA_PORT);
+                            reinit = false;
+                        }
+                        catch (Exception)
+                        {
+                            Console.WriteLine("Couldn't create udp sender");
+                        }
+                    }
 
-                var message = new OscMessage("/AutoData",
-                    (int)autoStartPositionIndex,
-                    (int)autoModeIndex);
-                udpSender.Send(message);
+                    int autoStartPositionIndex = -1;
+                    int autoModeIndex = -1;
+                    //Dispatcher.Invoke(() => autoStartPositionIndex = cboAutoStartSelection.SelectedIndex);
+                    //Dispatcher.Invoke(() => autoStartPositionIndex = cboAutoMode.SelectedIndex);
 
-                Thread.Sleep(100);
+                    var message = new OscMessage("/AutoData",
+                        (int)autoStartPositionIndex,
+                        (int)autoModeIndex);
+                    udpSender.Send(message);
+
+                    Thread.Sleep(100);
+                }
+                catch (Exception ex)
+                {
+                    Console.WriteLine(ex.ToString());
+                    try
+                    {
+                        udpSender.Close();
+                    }
+                    catch (Exception)
+                    {
+
+                    }
+                    reinit = true;
+                }
             }
 
             udpSender.Close();
@@ -471,140 +165,130 @@ namespace CyberDash
 
         private void oscReceiverWorker_DoWork(object sender, DoWorkEventArgs e)
         {
-            var udpListener = new UDPListener(AUTO_DATA_PORT);
+            UDPListener udpListener = null;
+            bool reinit = true;
             OscMessage messageReceived = null;
             bool prevEnabled = false;
             CKLogHandler ckLogger = null;
-            //Dispatcher.Invoke(() => motorCurrentChart.Series = motorCurrentList);
             while (runThread)
             {
-                messageReceived = (OscMessage)udpListener.Receive();
-                if (messageReceived != null)
-                {
-                    switch (messageReceived.Address)
+                try {
+                    if (udpListener == null || reinit)
                     {
-                        case "/LogData":
-                            try
-                            {
-                                List<CyberDataItem> dataList = new List<CyberDataItem>();
-                                Parallel.ForEach(messageReceived.Arguments, (a) =>
-                                {
-                                    lock (dataParserLock) {
-                                        dataList.Add(new CyberDataItem(a.ToString()));
-                                    }
-                                });
-                                dataList.Sort();
+                        try
+                        {
+                            udpListener = new UDPListener(AUTO_DATA_PORT);
+                            reinit = false;
+                        }
+                        catch (Exception)
+                        {
+                            Console.WriteLine("Couldn't create udp listener");
+                        }
+                    }
 
+                    messageReceived = (OscMessage)udpListener.Receive();
+                    if (messageReceived != null)
+                    {
+                        switch (messageReceived.Address)
+                        {
+                            case "/LogData":
                                 try
                                 {
-                                    //CyberDataItem hasGamePieceItem = dataList.First(s => s.Key.ToLower().Contains("hasgamepiece"));
-                                    //bool hasGamePiece = hasGamePieceItem.Value.ToLower().Equals("true");
-                                    ////Dispatcher.InvokeAsync(() => ledHasGamePiece.IsActive = hasGamePiece);
-
-                                    //CyberDataItem hasTurretFaultString = dataList.First(s => s.Key.ToLower().Contains("turretfault"));
-                                    //bool hasTurretFault = hasTurretFaultString.Value.ToLower().Equals("true");
-                                    //Dispatcher.InvokeAsync(() => ledTurretFault.IsActive = hasTurretFault);
-
-                                    //CyberDataItem hasElevatorFaultString = dataList.First(s => s.Key.ToLower().Contains("elevatorfault"));
-                                    //bool hasElevatorFault = hasElevatorFaultString.Value.ToLower().Equals("true");
-                                    //Dispatcher.InvokeAsync(() => ledElevatorFault.IsActive = hasElevatorFault);
-
-                                    //CyberDataItem hasClimberFaultString = dataList.First(s => s.Key.ToLower().Contains("climberfault"));
-                                    //bool hasClimberFault = hasClimberFaultString.Value.ToLower().Equals("true");
-                                    //Dispatcher.InvokeAsync(() => ledClimberFault.IsActive = hasClimberFault);
-                                }
-                                catch (Exception ex)
-                                {
-
-                                }
-
-                                //try
-                                //{
-                                //    List<CyberDataItem> motorCurrentPacketList = dataList.FindAll(s => s.Key.ToLower().Contains("current"));
-
-
-                                //    if (motorCurrentPacketList.Count != motorCurrentList.Count)
-                                //    {
-                                //        Dispatcher.InvokeAsync(() =>
-                                //        {
-                                //            motorCurrentList.Clear();
-                                //            motorCurrentPacketList.ForEach((s) =>
-                                //            {
-                                //                GLineSeries g = new GLineSeries
-                                //                {
-                                //                    Title = s.Key,
-                                //                    Values = new ConstrainedGearedValues<double>(10).WithQuality(Quality.Low),
-                                //                    PointGeometry = null,
-                                //                    DataLabels = false,
-                                //                    Fill = null,
-                                //                    AllowDrop = false,
-
-                                //                };
-                                //                motorCurrentList.Add(g);
-                                //            });
-                                //        });
-
-                                //    }
-
-                                //    for (int i = 0; i < motorCurrentPacketList.Count; i++)
-                                //    {
-                                //        double val = Double.Parse(motorCurrentPacketList[i].Value);
-                                //        ((ConstrainedGearedValues<double>)(motorCurrentList[i].Values)).Add(val);
-                                //    }
-                                //}
-                                //catch (Exception ex)
-                                //{
-                                //    Console.WriteLine(ex.ToString());
-                                //}
-
-                                Enabled = dataList.First(s => s.Key.ToLower().Contains("enabled")).Value.ToLower().Equals("true");
-
-                                if (prevEnabled != Enabled && Enabled)
-                                {
-                                    if (ckLogger == null)
+                                    List<CyberDataItem> dataList = new List<CyberDataItem>();
+                                    Parallel.ForEach(messageReceived.Arguments, (a) =>
                                     {
-                                        ckLogger = new CKLogHandler(@"C:\Logs\OSCLog_" + GetTimestamp(DateTime.Now) + ".csv");
-                                        ckLogger.StartLogging();
-                                    }
-                                    prevEnabled = Enabled;
-                                }
+                                        lock (dataParserLock)
+                                        {
+                                            dataList.Add(new CyberDataItem(a.ToString()));
+                                        }
+                                    });
+                                    dataList.Sort();
 
-                                if (ckLogger != null)
-                                {
                                     try
                                     {
-                                        List<string> logDataList;
-                                        if (!ckLogger.HeadersWritten)
-                                        {
-                                            logDataList = dataList.Select(s => s.Key).ToList();
-                                            ckLogger.WriteCSVHeaders(logDataList);
-                                        }
+                                        //CyberDataItem hasGamePieceItem = dataList.First(s => s.Key.ToLower().Contains("hasgamepiece"));
+                                        //bool hasGamePiece = hasGamePieceItem.Value.ToLower().Equals("true");
+                                        ////Dispatcher.InvokeAsync(() => ledHasGamePiece.IsActive = hasGamePiece);
 
-                                        logDataList = dataList.Select(s => s.Value).ToList();
-                                        ckLogger.LogData(logDataList);
+                                        //CyberDataItem hasTurretFaultString = dataList.First(s => s.Key.ToLower().Contains("turretfault"));
+                                        //bool hasTurretFault = hasTurretFaultString.Value.ToLower().Equals("true");
+                                        //Dispatcher.InvokeAsync(() => ledTurretFault.IsActive = hasTurretFault);
+
+                                        //CyberDataItem hasElevatorFaultString = dataList.First(s => s.Key.ToLower().Contains("elevatorfault"));
+                                        //bool hasElevatorFault = hasElevatorFaultString.Value.ToLower().Equals("true");
+                                        //Dispatcher.InvokeAsync(() => ledElevatorFault.IsActive = hasElevatorFault);
+
+                                        //CyberDataItem hasClimberFaultString = dataList.First(s => s.Key.ToLower().Contains("climberfault"));
+                                        //bool hasClimberFault = hasClimberFaultString.Value.ToLower().Equals("true");
+                                        //Dispatcher.InvokeAsync(() => ledClimberFault.IsActive = hasClimberFault);
                                     }
                                     catch (Exception ex)
                                     {
 
                                     }
-                                }
 
-                                if (prevEnabled != Enabled && !Enabled)
-                                {
+                                    Enabled = dataList.First(s => s.Key.ToLower().Contains("enabled")).Value.ToLower().Equals("true");
+
+                                    if (prevEnabled != Enabled && Enabled)
+                                    {
+                                        if (ckLogger == null)
+                                        {
+                                            ckLogger = new CKLogHandler(@"C:\Logs\OSCLog_" + GetTimestamp(DateTime.Now) + ".csv");
+                                            ckLogger.StartLogging();
+                                        }
+                                        prevEnabled = Enabled;
+                                    }
+
                                     if (ckLogger != null)
-                                        ckLogger.StopLogging();
-                                    ckLogger = null;
-                                    prevEnabled = Enabled;
-                                }
-                            }
-                            catch (Exception) { }
-                            break;
-                        default:
-                            break;
-                    }
-                }
+                                    {
+                                        try
+                                        {
+                                            List<string> logDataList;
+                                            if (!ckLogger.HeadersWritten)
+                                            {
+                                                logDataList = dataList.Select(s => s.Key).ToList();
+                                                ckLogger.WriteCSVHeaders(logDataList);
+                                            }
 
-                Thread.Sleep(1);
+                                            logDataList = dataList.Select(s => s.Value).ToList();
+                                            ckLogger.LogData(logDataList);
+                                        }
+                                        catch (Exception ex)
+                                        {
+
+                                        }
+                                    }
+
+                                    if (prevEnabled != Enabled && !Enabled)
+                                    {
+                                        if (ckLogger != null)
+                                            ckLogger.StopLogging();
+                                        ckLogger = null;
+                                        prevEnabled = Enabled;
+                                    }
+                                }
+                                catch (Exception) { }
+                                break;
+                            default:
+                                break;
+                        }
+                    }
+
+                    Thread.Sleep(1);
+                }
+                catch (Exception ex)
+                {
+                    Console.WriteLine(ex.ToString());
+                    try
+                    {
+                        udpListener.Close();
+                    }
+                    catch (Exception)
+                    {
+
+                    }
+                    reinit = true;
+                }
             }
 
             udpListener.Close();
@@ -640,80 +324,6 @@ namespace CyberDash
         public static String GetTimestamp(DateTime value)
         {
             return value.ToString("yyyy-MM-dd-HH-mm-ss-ffff");
-        }
-
-        private void cmdRefresh_Click(object sender, RoutedEventArgs e)
-        {
-            enumerateJoysticks();
-        }
-
-        private void cmdUp_Click(object sender, RoutedEventArgs e)
-        {
-            moveJoystick(true);
-        }
-
-        private void cmdDown_Click(object sender, RoutedEventArgs e)
-        {
-            moveJoystick(false);
-        }
-
-        public static bool PingHost(String nameOrAddress, int numTimes)
-        {
-            bool successful = true;
-            for (int i = 0; i < numTimes; i++)
-            {
-                successful &= PingHost(nameOrAddress);
-            }
-            return successful;
-        }
-
-        public static bool PingHost(string nameOrAddress)
-        {
-            bool pingable = false;
-            Ping pinger = null;
-
-            try
-            {
-                pinger = new Ping();
-                PingReply reply = pinger.Send(nameOrAddress);
-                pingable = reply.Status == IPStatus.Success;
-            }
-            catch (PingException)
-            {
-                // Discard PingExceptions and return false;
-            }
-            finally
-            {
-                if (pinger != null)
-                {
-                    pinger.Dispose();
-                }
-            }
-
-            return pingable;
-        }
-    }
-
-    static class Logic
-    {
-        [DllImport("user32.dll", EntryPoint = "SetWindowPos")]
-        public static extern IntPtr SetWindowPos(IntPtr hWnd, int hWndInsertAfter, int x, int Y, int cx, int cy, int wFlags);
-
-        public static void Move()
-        {
-            const short SWP_NOSIZE = 1;
-            const short SWP_NOZORDER = 0X4;
-            const int SWP_SHOWWINDOW = 0x0040;
-
-            Process[] processes = Process.GetProcesses(".");
-            foreach (var process in processes)
-            {
-                IntPtr handle = process.MainWindowHandle;
-                if (handle != IntPtr.Zero)
-                {
-                    SetWindowPos(handle, 0, 0, 0, 0, 0, SWP_NOZORDER | SWP_NOSIZE | SWP_SHOWWINDOW);
-                }
-            }
         }
     }
 }
