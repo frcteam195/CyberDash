@@ -53,7 +53,7 @@ namespace CyberDash
                                     {
                                         csv.WriteField(s);
                                     }
-                                    csv.NextRecordAsync();
+                                    csv.NextRecord();
                                 }
                                 catch (Exception ex)
                                 {
@@ -79,8 +79,11 @@ namespace CyberDash
 
         public void WriteCSVHeaders(List<string> headerData)
         {
-            LogData(headerData);
-            HeadersWritten = true;
+            lock (lockObject)
+            {
+                LogData(headerData);
+                HeadersWritten = true;
+            }
         }
 
         public void LogData(List<string> logData)
