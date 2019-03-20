@@ -91,11 +91,11 @@ namespace CyberDash
 
         private void refocusTimer_Tick(object sender, EventArgs e)
         {
-            if (Enabled)
-            {
+            //if (Enabled)
+            //{
                 this.Activate();
                 this.Focus();
-            }
+            //}
         }
 
 
@@ -263,21 +263,29 @@ namespace CyberDash
 
                                     try
                                     {
-                                        //CyberDataItem hasGamePieceItem = dataList.First(s => s.Key.ToLower().Contains("hasgamepiece"));
-                                        //bool hasGamePiece = hasGamePieceItem.Value.ToLower().Equals("true");
-                                        ////Dispatcher.InvokeAsync(() => ledHasGamePiece.IsActive = hasGamePiece);
+                                        CyberDataItem cdiVisionSystemFaulted = dataList.First(s => s.Key.ToLower().Contains("isvisionsystemfaulted"));
+                                        bool hasVisionSystemFault = cdiVisionSystemFaulted.Value.ToLower().Equals("true");
+                                        Dispatcher.InvokeAsync(() => ledVisionFault.IsActive = hasVisionSystemFault);
 
-                                        //CyberDataItem hasTurretFaultString = dataList.First(s => s.Key.ToLower().Contains("turretfault"));
-                                        //bool hasTurretFault = hasTurretFaultString.Value.ToLower().Equals("true");
-                                        //Dispatcher.InvokeAsync(() => ledTurretFault.IsActive = hasTurretFault);
+                                        CyberDataItem cdiTurretSystemFaulted = dataList.First(s => s.Key.ToLower().Contains("isturretfaulted"));
+                                        bool hasTurretFault = cdiTurretSystemFaulted.Value.ToLower().Equals("true");
+                                        Dispatcher.InvokeAsync(() => ledTurretFault.IsActive = hasTurretFault);
 
-                                        //CyberDataItem hasElevatorFaultString = dataList.First(s => s.Key.ToLower().Contains("elevatorfault"));
-                                        //bool hasElevatorFault = hasElevatorFaultString.Value.ToLower().Equals("true");
-                                        //Dispatcher.InvokeAsync(() => ledElevatorFault.IsActive = hasElevatorFault);
+                                        CyberDataItem cdiElevatorFaulted = dataList.First(s => s.Key.ToLower().Contains("iselevatorfaulted"));
+                                        bool hasElevatorFault = cdiElevatorFaulted.Value.ToLower().Equals("true");
+                                        Dispatcher.InvokeAsync(() => ledElevatorFault.IsActive = hasElevatorFault);
 
-                                        //CyberDataItem hasClimberFaultString = dataList.First(s => s.Key.ToLower().Contains("climberfault"));
-                                        //bool hasClimberFault = hasClimberFaultString.Value.ToLower().Equals("true");
-                                        //Dispatcher.InvokeAsync(() => ledClimberFault.IsActive = hasClimberFault);
+                                        CyberDataItem cdiHatchArmFaulted = dataList.First(s => s.Key.ToLower().Contains("ishatcharmfaulted"));
+                                        bool hasHatchArmFault = cdiHatchArmFaulted.Value.ToLower().Equals("true");
+                                        Dispatcher.InvokeAsync(() => ledHatchArmFault.IsActive = hasHatchArmFault);
+
+                                        CyberDataItem cdiDriveFaulted = dataList.First(s => s.Key.ToLower().Contains("isdrivefaulted"));
+                                        bool hasDriveFault = cdiDriveFaulted.Value.ToLower().Equals("true");
+                                        Dispatcher.InvokeAsync(() => ledDriveFault.IsActive = hasDriveFault);
+
+                                        CyberDataItem cdiBallIntakeArmFaulted = dataList.First(s => s.Key.ToLower().Contains("isballintakearmfaulted"));
+                                        bool hasBallIntakeArmFault = cdiBallIntakeArmFaulted.Value.ToLower().Equals("true");
+                                        Dispatcher.InvokeAsync(() => ledBallIntakeArmFault.IsActive = hasBallIntakeArmFault);
                                     }
                                     catch (Exception ex)
                                     {
@@ -374,13 +382,22 @@ namespace CyberDash
         {
             runThread = false;
             int waitCounter = 0;
-            while ((oscReceiver.IsBusy || oscSender.IsBusy) && waitCounter++ < 5)
+            while ((oscReceiver.IsBusy || oscSender.IsBusy) && waitCounter++ < 3)
                 Thread.Sleep(1000);
         }
 
         public static String GetTimestamp(DateTime value)
         {
             return value.ToString("yyyy-MM-dd-HH-mm-ss-ffff");
+        }
+
+        private void CyberDashMainWindow_KeyDown(object sender, KeyEventArgs e)
+        {
+            if ((Keyboard.IsKeyDown(Key.LeftCtrl) || Keyboard.IsKeyDown(Key.RightCtrl)) && e.Key == Key.OemPeriod)
+            {
+                Window_Closing(sender, null);
+                exitTriggered(0);
+            }
         }
     }
 }

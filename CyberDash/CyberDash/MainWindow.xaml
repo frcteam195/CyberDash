@@ -11,6 +11,7 @@
         Background="#2a2a2a"
         Closing="Window_Closing"
         Topmost="False"
+        KeyDown="CyberDashMainWindow_KeyDown"
         Title="MainWindow" Height="808" Width="1920" WindowStyle="None" ResizeMode="NoResize" WindowStartupLocation="Manual" x:Name="CyberDashMainWindow" SnapsToDevicePixels="True">
     <Grid HorizontalAlignment="Stretch" Margin="0,0,0,0" VerticalAlignment="Stretch">
         <Grid.ColumnDefinitions>
@@ -33,7 +34,7 @@
                 <Image Grid.Column="1" Grid.Row="0" x:Name="img2Viewer" HorizontalAlignment="Stretch" VerticalAlignment="Stretch"/>
             </Grid>
         </Grid>
-        <Grid Grid.Column="0" Grid.Row="1">
+        <Grid Grid.Column="0" Grid.Row="1" HorizontalAlignment="Stretch" VerticalAlignment="Stretch">
             <GroupBox Header="Turret Fault" HorizontalAlignment="Left" Margin="877,10,0,0" VerticalAlignment="Top" BorderThickness="0" Foreground="White" FontSize="25">
                 <panelControls:LEDControl x:Name="ledTurretFault" Width="100" Height="100" ColorOn="#ff1212"  ColorOff="#808080" IsActive="False"/>
             </GroupBox>
