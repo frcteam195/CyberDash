@@ -262,6 +262,7 @@
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
   <Target Name="AfterBuild" Condition=" '$(Configuration)' == 'Release' ">
+    <Exec Command="cmd.exe /c &quot;IF EXIST C:\Users\Team195\Desktop\CyberDash.zip DEL /F C:\Users\Team195\Desktop\CyberDash.zip&quot;" />
     <Exec Command="powershell.exe Compress-Archive -Path &quot;$(TargetDir)*&quot; -CompressionLevel Fastest -DestinationPath &quot;C:\Users\Team195\Desktop\CyberDash&quot;" />
   </Target>
 </Project>
