@@ -91,11 +91,11 @@ namespace CyberDash
 
         private void refocusTimer_Tick(object sender, EventArgs e)
         {
-            //if (Enabled)
-            //{
+            if (Enabled)
+            {
                 this.Activate();
                 this.Focus();
-            //}
+            }
         }
 
 
@@ -383,7 +383,7 @@ namespace CyberDash
             runThread = false;
             int waitCounter = 0;
             while ((oscReceiver.IsBusy || oscSender.IsBusy) && waitCounter++ < 3)
-                Thread.Sleep(1000);
+                Thread.Sleep(500);
         }
 
         public static String GetTimestamp(DateTime value)
