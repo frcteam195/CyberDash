@@ -14,63 +14,44 @@
         Title="MainWindow" Height="808" Width="1920" WindowStyle="None" ResizeMode="NoResize" WindowStartupLocation="Manual" x:Name="CyberDashMainWindow" SnapsToDevicePixels="True">
     <Grid HorizontalAlignment="Stretch" Margin="0,0,0,0" VerticalAlignment="Stretch">
         <Grid.ColumnDefinitions>
-            <ColumnDefinition Width="Auto" />
             <ColumnDefinition Width="*" />
         </Grid.ColumnDefinitions>
         <Grid.RowDefinitions>
             <RowDefinition Height="*"/>
+            <RowDefinition Height="Auto" />
         </Grid.RowDefinitions>
         <Grid Grid.Column="0" Grid.Row="0">
-            <Image x:Name="img1Viewer" Height="480" Width="640" MinWidth="640" MaxWidth="640" MinHeight="480" MaxHeight="480" VerticalAlignment="Top" />
-            <Image x:Name="img2Viewer" Height="480" Width="640" MinWidth="640" MaxWidth="640" MinHeight="480" MaxHeight="480" VerticalAlignment="Bottom" />
+            <Grid HorizontalAlignment="Stretch" VerticalAlignment="Stretch">
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="*" />
+                    <ColumnDefinition Width="*" />
+                </Grid.ColumnDefinitions>
+                <Grid.RowDefinitions>
+                    <RowDefinition Height="*"/>
+                </Grid.RowDefinitions>
+                <Image Grid.Column="0" Grid.Row="0" x:Name="img1Viewer" HorizontalAlignment="Stretch" VerticalAlignment="Stretch" />
+                <Image Grid.Column="1" Grid.Row="0" x:Name="img2Viewer" HorizontalAlignment="Stretch" VerticalAlignment="Stretch"/>
+            </Grid>
         </Grid>
-        <Grid Grid.Column="1" Grid.Row="0">
-            <TabControl HorizontalAlignment="Stretch" VerticalAlignment="Stretch">
-                <TabItem Header="Main Panel" HorizontalAlignment="Stretch" VerticalAlignment="Stretch">
-                    <Grid Background="#2a2a2a" HorizontalAlignment="Stretch" VerticalAlignment="Stretch">
-                        <GroupBox Header="Turret Fault" HorizontalAlignment="Left" Margin="105,45,0,0" VerticalAlignment="Top" BorderThickness="0" Foreground="White" FontSize="25">
-                            <panelControls:LEDControl x:Name="ledTurretFault" Width="100" Height="100" ColorOn="#ff1212"  ColorOff="#808080" IsActive="False"/>
-                        </GroupBox>
-                        <GroupBox Header="Elevator Fault" HorizontalAlignment="Left" Margin="325,45,0,0" VerticalAlignment="Top" BorderThickness="0" Foreground="White" FontSize="25">
-                            <panelControls:LEDControl x:Name="ledElevatorFault" Width="100" Height="100" ColorOn="#ff1212"  ColorOff="#808080" IsActive="False"/>
-                        </GroupBox>
-                        <GroupBox Header="Ball Intake Arm Fault" HorizontalAlignment="Left" Margin="524,45,0,0" VerticalAlignment="Top" BorderThickness="0" Foreground="White" FontSize="25">
-                            <panelControls:LEDControl x:Name="ledBallIntakeArmFault" Width="100" Height="100" ColorOn="#ff1212"  ColorOff="#808080" IsActive="False"/>
-                        </GroupBox>
-                        <GroupBox Header="Vision System Fault" HorizontalAlignment="Left" Margin="66,215,0,0" VerticalAlignment="Top" BorderThickness="0" Foreground="White" FontSize="25">
-                            <panelControls:LEDControl x:Name="ledVisionFault" Width="100" Height="100" ColorOn="#ff1212"  ColorOff="#808080" IsActive="False"/>
-                        </GroupBox>
-                        <GroupBox Header="Hatch Arm Fault" HorizontalAlignment="Left" Margin="325,215,0,0" VerticalAlignment="Top" BorderThickness="0" Foreground="White" FontSize="25">
-                            <panelControls:LEDControl x:Name="ledHatchArmFault" Width="100" Height="100" ColorOn="#ff1212"  ColorOff="#808080" IsActive="False"/>
-                        </GroupBox>
-                        <GroupBox Header="Drive Fault" HorizontalAlignment="Left" Margin="578,215,0,0" VerticalAlignment="Top" BorderThickness="0" Foreground="White" FontSize="25">
-                            <panelControls:LEDControl x:Name="ledDriveFault" Width="100" Height="100" ColorOn="#ff1212"  ColorOff="#808080" IsActive="False"/>
-                        </GroupBox>
-
-
-
-
-                        <!--<panelControls:LEDControl x:Name="ledHasCube" Width="400" Height="400" ColorOn="#fff600"  ColorOff="#808080" IsActive="False" Margin="212,328,319,52" Grid.Column="1"/>
-                        <Label Content="Arm Fault" HorizontalAlignment="Left" Margin="53,30,0,0" VerticalAlignment="Top" FontSize="20" Foreground="White" Grid.ColumnSpan="2" />
-                        <panelControls:LEDControl x:Name="ledArmFault" Width="100" Height="100" ColorOn="#ff1212"  ColorOff="#808080" IsActive="False" Margin="48,74,886,606" Grid.ColumnSpan="2" RenderTransformOrigin="-0.35,0.51"/>
-                        <Label Content="Elevator Fault" HorizontalAlignment="Left" Margin="174,30,0,0" VerticalAlignment="Top" FontSize="20" Foreground="White" />
-                        <panelControls:LEDControl x:Name="ledElevatorFault" Width="100" Height="100" ColorOn="#ff1212"  ColorOff="#808080" IsActive="False" Margin="188,72,746,608"/>
-                        <Label Content="Climber Fault" HorizontalAlignment="Left" Margin="316,30,0,0" VerticalAlignment="Top" FontSize="20" Foreground="White" />
-                        <panelControls:LEDControl x:Name="ledClimberFault" Width="100" Height="100" ColorOn="#ff1212"  ColorOff="#808080" IsActive="False" Margin="330,72,604,608"/>-->
-                        <!--<Label Content="Auto Starting Position:" HorizontalAlignment="Left" Margin="577,42,0,0" VerticalAlignment="Top" FontSize="25" Foreground="White" Grid.Column="1" />
-                        <ComboBox x:Name="cboAutoStartSelection" HorizontalAlignment="Left" Margin="577,90,0,0" VerticalAlignment="Top" SelectedIndex="0" Width="268" Height="42" HorizontalContentAlignment="Center" VerticalContentAlignment="Center" FontSize="25" Grid.Column="1">
-                            <ComboBoxItem Content="Start From Left"/>
-                            <ComboBoxItem Content="Start From Center"/>
-                            <ComboBoxItem Content="Start From Right"/>
-                        </ComboBox>
-                        <Label Content="Auto Mode:" HorizontalAlignment="Left" Margin="577,171,0,0" VerticalAlignment="Top" FontSize="25" Foreground="White" Grid.Column="1" />
-                        <ComboBox x:Name="cboAutoMode" HorizontalAlignment="Left" Margin="577,220,0,0" VerticalAlignment="Top" SelectedIndex="0" Width="268" Height="42" HorizontalContentAlignment="Center" VerticalContentAlignment="Center" FontSize="25" Grid.Column="1">
-                            <ComboBoxItem Content="Mode 1"/>
-                            <ComboBoxItem Content="Mode 2"/>
-                        </ComboBox>-->
-                    </Grid>
-                </TabItem>
-            </TabControl>
+        <Grid Grid.Column="0" Grid.Row="1">
+            <GroupBox Header="Turret Fault" HorizontalAlignment="Left" Margin="877,10,0,0" VerticalAlignment="Top" BorderThickness="0" Foreground="White" FontSize="25">
+                <panelControls:LEDControl x:Name="ledTurretFault" Width="100" Height="100" ColorOn="#ff1212"  ColorOff="#808080" IsActive="False"/>
+            </GroupBox>
+            <GroupBox Header="Elevator Fault" HorizontalAlignment="Left" Margin="440,10,0,0" VerticalAlignment="Top" BorderThickness="0" Foreground="White" FontSize="25">
+                <panelControls:LEDControl x:Name="ledElevatorFault" Width="100" Height="100" ColorOn="#ff1212"  ColorOff="#808080" IsActive="False"/>
+            </GroupBox>
+            <GroupBox Header="Ball Intake Arm Fault" HorizontalAlignment="Left" Margin="10,10,0,0" VerticalAlignment="Top" BorderThickness="0" Foreground="White" FontSize="25">
+                <panelControls:LEDControl x:Name="ledBallIntakeArmFault" Width="100" Height="100" ColorOn="#ff1212"  ColorOff="#808080" IsActive="False"/>
+            </GroupBox>
+            <GroupBox Header="Vision System Fault" HorizontalAlignment="Left" Margin="1088,10,0,0" VerticalAlignment="Top" BorderThickness="0" Foreground="White" FontSize="25">
+                <panelControls:LEDControl x:Name="ledVisionFault" Width="100" Height="100" ColorOn="#ff1212"  ColorOff="#808080" IsActive="False"/>
+            </GroupBox>
+            <GroupBox Header="Hatch Arm Fault" HorizontalAlignment="Left" Margin="635,10,0,0" VerticalAlignment="Top" BorderThickness="0" Foreground="White" FontSize="25">
+                <panelControls:LEDControl x:Name="ledHatchArmFault" Width="100" Height="100" ColorOn="#ff1212"  ColorOff="#808080" IsActive="False"/>
+            </GroupBox>
+            <GroupBox Header="Drive Fault" HorizontalAlignment="Left" Margin="260,10,0,0" VerticalAlignment="Top" BorderThickness="0" Foreground="White" FontSize="25">
+                <panelControls:LEDControl x:Name="ledDriveFault" Width="100" Height="100" ColorOn="#ff1212"  ColorOff="#808080" IsActive="False"/>
+            </GroupBox>
         </Grid>
     </Grid>
 

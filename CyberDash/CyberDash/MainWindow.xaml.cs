@@ -67,9 +67,9 @@ namespace CyberDash
             mjpegParser2.Error += mjpeg2_Error;
             mjpegParser2.ParseStream(LimelightBackAddr);
 
-            img1Viewer.Stretch = Stretch.Uniform;
+            img1Viewer.Stretch = Stretch.Fill;
             RenderOptions.SetBitmapScalingMode(img1Viewer, BitmapScalingMode.LowQuality);
-            img2Viewer.Stretch = Stretch.Uniform;
+            img2Viewer.Stretch = Stretch.Fill;
             RenderOptions.SetBitmapScalingMode(img2Viewer, BitmapScalingMode.LowQuality);
 
             oscSender.DoWork += oscSenderWorker_DoWork;
