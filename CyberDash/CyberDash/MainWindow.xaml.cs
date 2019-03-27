@@ -55,6 +55,8 @@ namespace CyberDash
         private MjpegDecoder mjpegParser1 = new MjpegDecoder();
         private MjpegDecoder mjpegParser2 = new MjpegDecoder();
 
+        private object cameraLock = new object();
+
         public MainWindow()
         {
             InitializeComponent();
@@ -85,7 +87,7 @@ namespace CyberDash
 
             System.Windows.Threading.DispatcherTimer refocusTimer = new System.Windows.Threading.DispatcherTimer();
             refocusTimer.Tick += refocusTimer_Tick;
-            refocusTimer.Interval = new TimeSpan(0, 0, 0, 0, 100);
+            refocusTimer.Interval = new TimeSpan(0, 0, 0, 0, 1000);
             refocusTimer.Start();
         }
 
@@ -131,13 +133,19 @@ namespace CyberDash
         {
             if (camera1Error)
             {
-                mjpegParser1.ParseStream(LimelightFrontAddr);
-                camera1Error = false;
+                lock (cameraLock)
+                {
+                    mjpegParser1.ParseStream(LimelightFrontAddr);
+                    camera1Error = false;
+                }
             }
             if (camera2Error)
             {
-                mjpegParser2.ParseStream(LimelightBackAddr);
-                camera2Error = false;
+                lock (cameraLock)
+                {
+                    mjpegParser2.ParseStream(LimelightBackAddr);
+                    camera2Error = false;
+                }
             }
         }
 
@@ -148,8 +156,11 @@ namespace CyberDash
 
         void mjpeg1_Error(object sender, ErrorEventArgs e)
         {
-            mjpegParser1.StopStream();
-            camera1Error = true;
+            lock (cameraLock)
+            {
+                mjpegParser1.StopStream();
+                camera1Error = true;
+            }
         }
 
         private void mjpeg2_FrameReady(object sender, FrameReadyEventArgs e)
@@ -159,8 +170,11 @@ namespace CyberDash
 
         void mjpeg2_Error(object sender, ErrorEventArgs e)
         {
-            mjpegParser2.StopStream();
-            camera2Error = true;
+            lock (cameraLock)
+            {
+                mjpegParser2.StopStream();
+                camera2Error = true;
+            }
         }
 
         private void oscSenderWorker_DoWork(object sender, DoWorkEventArgs e)
@@ -187,8 +201,8 @@ namespace CyberDash
 
                     int autoStartPositionIndex = -1;
                     int autoModeIndex = -1;
-                    //Dispatcher.Invoke(() => autoStartPositionIndex = cboAutoStartSelection.SelectedIndex);
-                    //Dispatcher.Invoke(() => autoStartPositionIndex = cboAutoMode.SelectedIndex);
+                    Dispatcher.Invoke(() => autoStartPositionIndex = cboAutoStartSelection.SelectedIndex);
+                    Dispatcher.Invoke(() => autoStartPositionIndex = cboAutoMode.SelectedIndex);
 
                     var message = new OscMessage("/AutoData",
                         (int)autoStartPositionIndex,
@@ -398,6 +412,14 @@ namespace CyberDash
                 Window_Closing(sender, null);
                 exitTriggered(0);
             }
+
+            if (e.Key == Key.R)
+            {
+                mjpeg1_Error(null, null);
+                mjpeg2_Error(null, null);
+                Console.WriteLine("Key R Pressed");
+            }
         }
+
     }
 }
