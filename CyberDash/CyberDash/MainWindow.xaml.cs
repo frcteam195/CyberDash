@@ -202,7 +202,7 @@ namespace CyberDash
                     int autoStartPositionIndex = -1;
                     int autoModeIndex = -1;
                     Dispatcher.Invoke(() => autoStartPositionIndex = cboAutoStartSelection.SelectedIndex);
-                    Dispatcher.Invoke(() => autoStartPositionIndex = cboAutoMode.SelectedIndex);
+                    Dispatcher.Invoke(() => autoModeIndex = cboAutoMode.SelectedIndex);
 
                     var message = new OscMessage("/AutoData",
                         (int)autoStartPositionIndex,
