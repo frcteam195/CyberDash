@@ -175,7 +175,7 @@ namespace SharperOSC
 
 			lock (queue)
 			{
-				if (queue.Count() > 0)
+				if (queue.Count > 0)
 				{
 					byte[] bytes = queue.Dequeue();
 					return bytes;
