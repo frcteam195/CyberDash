@@ -37,7 +37,9 @@ namespace CyberDash
         public static readonly bool EMAIL_LOG_ENABLED = true;
 
         private readonly int AUTO_DATA_PORT = 5805;
-        private readonly string ROBOT_IP = "10.1.95.2";
+//        private readonly string ROBOT_IP = "10.1.95.2";
+        private readonly string ROBOT_IP = "192.168.215.1";
+
         private bool runThread = true;
 
         private bool Enabled { get; set; } = false;
@@ -54,6 +56,8 @@ namespace CyberDash
 
         private MjpegDecoder mjpegParser1 = new MjpegDecoder();
         private MjpegDecoder mjpegParser2 = new MjpegDecoder();
+
+        private TimeoutTimer heartbeatTimer = new TimeoutTimer(1);
 
         private object cameraLock = new object();
 
@@ -182,6 +186,8 @@ namespace CyberDash
             UDPSender udpSender = null;
             bool reinit = true;
 
+            var heartbeatMsg = new OscMessage("/RegisterRequestor");
+
             while (runThread)
             {
                 try
@@ -208,6 +214,12 @@ namespace CyberDash
                         (int)autoStartPositionIndex,
                         (int)autoModeIndex);
                     udpSender.Send(message);
+
+                    if (heartbeatTimer.isTimedOut())
+                    {
+                        udpSender.Send(heartbeatMsg);
+                        heartbeatTimer.reset();
+                    }
 
                     Thread.Sleep(100);
                 }

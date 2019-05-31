@@ -203,8 +203,10 @@
     <Compile Include="SharperOSC\UDPSender.cs" />
     <Compile Include="SharperOSC\Utils.cs" />
     <Compile Include="Utilities\CyberDataItem.cs" />
+    <Compile Include="Utilities\ElapsedTimer.cs" />
     <Compile Include="Utilities\MovingAverage.cs" />
     <Compile Include="Utilities\ThreadRateControl.cs" />
+    <Compile Include="Utilities\TimeoutTimer.cs" />
     <Page Include="MainWindow.xaml">
       <Generator>MSBuild:Compile</Generator>
       <SubType>Designer</SubType>
