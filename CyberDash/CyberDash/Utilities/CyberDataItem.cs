@@ -11,11 +11,10 @@ namespace CyberDash.Utilities
         public string Key { get; set; }
         public string Value { get; set; }
 
-        public CyberDataItem(string data)
+        public CyberDataItem(string key, string value)
         {
-            var l = data.Split(':');
-            Key = l[0];
-            Value = l[1].Split(';')[0];
+            Key = key;
+            Value = value;
         }
 
         public int CompareTo(CyberDataItem other)

@@ -37,8 +37,8 @@ namespace CyberDash
         public static readonly bool EMAIL_LOG_ENABLED = true;
 
         private readonly int AUTO_DATA_PORT = 5805;
-//        private readonly string ROBOT_IP = "10.1.95.2";
-        private readonly string ROBOT_IP = "192.168.215.1";
+        private readonly string ROBOT_IP = "10.1.95.2";
+        //private readonly string ROBOT_IP = "192.168.215.1";
 
         private bool runThread = true;
 
@@ -278,13 +278,14 @@ namespace CyberDash
                                 try
                                 {
                                     List<CyberDataItem> dataList = new List<CyberDataItem>();
-                                    Parallel.ForEach(messageReceived.Arguments, (a) =>
+
+                                    for (int i = 0; i < messageReceived.Arguments.Count; i+=2)
                                     {
-                                        lock (dataParserLock)
-                                        {
-                                            dataList.Add(new CyberDataItem(a.ToString()));
-                                        }
-                                    });
+                                        object key = messageReceived.Arguments[i];
+                                        object value = messageReceived.Arguments[i+1];
+                                        dataList.Add(new CyberDataItem(key.ToString(), value.ToString()));
+                                    }
+
                                     dataList.Sort();
 
                                     try
