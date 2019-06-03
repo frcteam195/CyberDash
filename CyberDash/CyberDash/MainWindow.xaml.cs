@@ -36,7 +36,8 @@ namespace CyberDash
 
         public static readonly bool EMAIL_LOG_ENABLED = true;
 
-        private readonly int AUTO_DATA_PORT = 5805;
+        private readonly int AUTO_DATA_PORT = 5806;
+        private readonly int LOG_DATA_PORT = 5805;
         private readonly string ROBOT_IP = "10.1.95.2";
         //private readonly string ROBOT_IP = "192.168.215.1";
 
@@ -183,7 +184,8 @@ namespace CyberDash
 
         private void oscSenderWorker_DoWork(object sender, DoWorkEventArgs e)
         {
-            UDPSender udpSender = null;
+            UDPSender autoDataSender = null;
+            UDPSender heartbeatDataSender = null;
             bool reinit = true;
 
             var heartbeatMsg = new OscMessage("/RegisterRequestor");
@@ -192,11 +194,29 @@ namespace CyberDash
             {
                 try
                 {
-                    if (udpSender == null || reinit)
+                    if (autoDataSender == null || heartbeatDataSender == null || reinit)
                     {
                         try
                         {
-                            udpSender = new UDPSender(ROBOT_IP, AUTO_DATA_PORT);
+                            try
+                            {
+                                autoDataSender.Close();
+                            }
+                            catch (Exception)
+                            {
+
+                            }
+                            try
+                            {
+                                heartbeatDataSender.Close();
+                            }
+                            catch (Exception)
+                            {
+
+                            }
+
+                            autoDataSender = new UDPSender(ROBOT_IP, AUTO_DATA_PORT);
+                            heartbeatDataSender = new UDPSender(ROBOT_IP, LOG_DATA_PORT);
                             reinit = false;
                         }
                         catch (Exception)
@@ -213,11 +233,11 @@ namespace CyberDash
                     var message = new OscMessage("/AutoData",
                         (int)autoStartPositionIndex,
                         (int)autoModeIndex);
-                    udpSender.Send(message);
+                    autoDataSender.Send(message);
 
                     if (heartbeatTimer.isTimedOut())
                     {
-                        udpSender.Send(heartbeatMsg);
+                        heartbeatDataSender.Send(heartbeatMsg);
                         heartbeatTimer.reset();
                     }
 
@@ -228,7 +248,15 @@ namespace CyberDash
                     Console.WriteLine(ex.ToString());
                     try
                     {
-                        udpSender.Close();
+                        autoDataSender.Close();
+                    }
+                    catch (Exception)
+                    {
+
+                    }
+                    try
+                    {
+                        heartbeatDataSender.Close();
                     }
                     catch (Exception)
                     {
@@ -238,7 +266,8 @@ namespace CyberDash
                 }
             }
 
-            udpSender.Close();
+            autoDataSender.Close();
+            heartbeatDataSender.Close();
         }
 
         private void oscSenderWorker_RunWorkerCompleted(object sender, RunWorkerCompletedEventArgs e)
@@ -260,7 +289,7 @@ namespace CyberDash
                     {
                         try
                         {
-                            udpListener = new UDPListener(AUTO_DATA_PORT);
+                            udpListener = new UDPListener(LOG_DATA_PORT);
                             reinit = false;
                         }
                         catch (Exception)
@@ -316,7 +345,9 @@ namespace CyberDash
                                     }
                                     catch (Exception ex)
                                     {
-
+#if DEBUG
+                                        Console.WriteLine(ex.ToString());
+#endif
                                     }
 
                                     Enabled = dataList.First(s => s.Key.ToLower().Contains("enabled")).Value.ToLower().Equals("true");
@@ -347,7 +378,9 @@ namespace CyberDash
                                         }
                                         catch (Exception ex)
                                         {
-
+#if DEBUG
+                                            Console.WriteLine(ex.ToString());
+#endif
                                         }
                                     }
 
@@ -359,7 +392,11 @@ namespace CyberDash
                                         prevEnabled = Enabled;
                                     }
                                 }
-                                catch (Exception) { }
+                                catch (Exception ex) {
+#if DEBUG
+                                    Console.WriteLine(ex.ToString());
+#endif
+                                }
                                 break;
                             default:
                                 break;
