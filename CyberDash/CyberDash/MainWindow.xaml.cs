@@ -1,29 +1,15 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.ComponentModel;
-using System.Diagnostics;
 using System.Linq;
-using System.Net.NetworkInformation;
-using System.Runtime.InteropServices;
-using System.Text;
 using System.Threading;
-using System.Threading.Tasks;
 using System.Windows;
-using System.Windows.Controls;
-using System.Windows.Data;
-using System.Windows.Documents;
 using System.Windows.Input;
 using System.Windows.Media;
-using System.Windows.Media.Imaging;
-using System.Windows.Navigation;
-using System.Windows.Shapes;
 
 using SharperOSC;
 using CyberDash.Utilities;
-using System.Management;
-using System.Net.Sockets;
-using System.Net;
-
+using ElgatoStreamDeckSupport;
 using MjpegProcessor;
 
 //[assembly: System.Windows.Media.DisableDpiAwareness]
@@ -42,6 +28,8 @@ namespace CyberDash
         //private readonly string ROBOT_IP = "192.168.215.1";
 
         private bool runThread = true;
+
+        private readonly CKStreamDeck streamDeck;
 
         private bool Enabled { get; set; } = false;
 
@@ -65,6 +53,15 @@ namespace CyberDash
         public MainWindow()
         {
             InitializeComponent();
+
+            try
+            {
+                //streamDeck = new CKStreamDeck(1);
+            }
+            catch (Exception ex)
+            {
+
+            }
 
             mjpegParser1.FrameReady += mjpeg1_FrameReady;
             mjpegParser1.Error += mjpeg1_Error;
